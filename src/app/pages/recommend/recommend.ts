@@ -1,4 +1,4 @@
-import { Component, WritableSignal, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, WritableSignal, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatCardModule } from '@angular/material/card';
@@ -33,6 +33,7 @@ const GEOLOCATION_TIMEOUT_MS = 8000;
   ],
   templateUrl: './recommend.html',
   styleUrl: './recommend.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Recommend {
   private store = inject(RestaurantStore);

@@ -2,7 +2,7 @@
  * @file 開発者用ページ。店舗データの件数・生JSON、設定・環境情報、ログイン/クラウド同期状態の
  * ダンプを行う。本番ビルドでは app.routes.ts が /dev ルート自体を含めないため到達不能。
  */
-import { Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,6 +16,7 @@ import { AuthService } from '../../core/firebase/auth.service';
   imports: [MatCardModule, MatIconModule, MatButtonModule],
   templateUrl: './dev.html',
   styleUrl: './dev.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Dev {
   private readonly restaurants = inject(RestaurantStore);

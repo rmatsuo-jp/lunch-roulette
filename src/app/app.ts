@@ -7,7 +7,7 @@
  * ラベル折り返し等による高さ変動時も `.app-content` の下端がタブバーに隠れないようにする
  * （PC のサイドバー表示時は app.scss 側で `--bottom-nav-height` を 0 に固定するため対象外）。
  */
-import { Component, ElementRef, afterNextRender, DestroyRef, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, afterNextRender, DestroyRef, effect, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -21,6 +21,7 @@ import { RestaurantSyncService } from './services/restaurant-sync.service';
   imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIconModule],
   templateUrl: './app.html',
   styleUrl: './app.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
   private readonly settings = inject(SettingsStore);

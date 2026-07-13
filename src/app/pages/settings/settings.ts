@@ -4,7 +4,7 @@
  *       Google ログインによるクラウド同期の状態表示・ログイン/ログアウトを扱う。
  *       version.ts はビルド/開発サーバ起動時に scripts/generate-version.mjs が自動生成する。
  */
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -30,6 +30,7 @@ import { AuthService } from '../../core/firebase/auth.service';
   ],
   templateUrl: './settings.html',
   styleUrl: './settings.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Settings {
   private settings = inject(SettingsStore);

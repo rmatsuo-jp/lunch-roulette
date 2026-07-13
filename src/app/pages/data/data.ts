@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -24,6 +24,7 @@ import { mapPlaceTypesToGenres } from '../../services/places-genre-map';
   ],
   templateUrl: './data.html',
   styleUrl: './data.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Data {
   private store = inject(RestaurantStore);
