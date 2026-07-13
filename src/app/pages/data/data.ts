@@ -5,12 +5,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 import { Restaurant } from '../../models/restaurant';
 import { GENRE_OPTIONS, MOOD_OPTIONS } from '../../models/tags';
 import { RestaurantStore } from '../../services/restaurant-store';
 import { CsvImport } from '../../services/csv-import';
 import { PlacesEnrichment } from '../../services/places-enrichment';
 import { mapPlaceTypesToGenres } from '../../services/places-genre-map';
+import { FileDownloadService } from '../../shared/services/file-download';
+import { ConfirmDialog } from '../../shared/ui/confirm-dialog/confirm-dialog';
 
 /** 取り込み & タグ付け画面：CSV 取込、ジャンル/気分タグ編集、JSON 入出力。 */
 @Component({
@@ -31,6 +34,8 @@ export class Data {
   private csv = inject(CsvImport);
   private places = inject(PlacesEnrichment);
   private snackBar = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
+  private fileDownload = inject(FileDownloadService);
 
   readonly restaurants = this.store.restaurants;
   readonly total = computed(() => this.restaurants().length);
@@ -115,21 +120,20 @@ export class Data {
   }
 
   clearAll(): void {
-    if (confirm('登録済みのお店をすべて削除します。よろしいですか？')) {
+    const ref = this.dialog.open(ConfirmDialog, {
+      data: { title: '確認', message: '登録済みのお店をすべて削除します。よろしいですか？' },
+    });
+    ref.afterClosed().subscribe((ok) => {
+      if (!ok) return;
       this.store.clear();
       this.notify('すべて削除しました');
-    }
+    });
   }
 
   /** 現在のデータを JSON ファイルとしてダウンロード。 */
   exportJson(): void {
-    const blob = new Blob([this.store.toJson()], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `lunch-roulette-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const filename = `lunch-roulette-${new Date().toISOString().slice(0, 10)}.json`;
+    this.fileDownload.downloadText(filename, this.store.toJson(), 'application/json');
   }
 
   /** JSON ファイルからデータを復元（既存は置き換え）。 */
