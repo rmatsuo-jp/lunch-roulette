@@ -8,8 +8,8 @@
  * （同期処理が tombstone を突き合わせるために使う）。
  */
 import { Injectable, computed, effect, signal } from '@angular/core';
-import { Restaurant, RestaurantData } from '../models/restaurant';
-import { readJson, writeJson } from '../core/storage';
+import { Restaurant, RestaurantData } from '@shared/models/restaurant';
+import { readJson, writeJson } from '@core/storage';
 
 const STORAGE_KEY = 'lunch-roulette.data.v1';
 const RECENT_PICKS_KEY = 'lunch-roulette.recent-picks.v1';

@@ -3,7 +3,7 @@
  * recommend.ts から純粋なビジネスロジックとして切り出し、他ページからも再利用できるようにする。
  */
 import { Injectable } from '@angular/core';
-import { Restaurant } from '../models/restaurant';
+import { Restaurant } from '@shared/models/restaurant';
 
 export interface LatLng {
   lat: number;

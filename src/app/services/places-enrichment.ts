@@ -7,8 +7,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Restaurant } from '../models/restaurant';
-import { OpeningPeriod, PlacesInfo } from '../models/places';
+import { Restaurant } from '@shared/models/restaurant';
+import { OpeningPeriod, PlacesInfo } from '@shared/models/places';
 import { SettingsStore } from './settings-store';
 
 const SEARCH_URL = 'https://places.googleapis.com/v1/places:searchText';

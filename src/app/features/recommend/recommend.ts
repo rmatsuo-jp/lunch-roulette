@@ -6,12 +6,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { GoogleMap, MapMarker } from '@angular/google-maps';
-import { Restaurant } from '../../models/restaurant';
-import { RestaurantStore } from '../../services/restaurant-store';
-import { GoogleMapsLoader } from '../../services/google-maps-loader';
-import { SettingsStore } from '../../services/settings-store';
-import { getRemainingOpenMinutes } from '../../services/opening-hours';
-import { LatLng, RecommendationScorer } from '../../services/recommendation-scorer';
+import { Restaurant } from '@shared/models/restaurant';
+import { RestaurantStore } from '@services/restaurant-store';
+import { GoogleMapsLoader } from '@services/google-maps-loader';
+import { SettingsStore } from '@services/settings-store';
+import { getRemainingOpenMinutes } from '@services/opening-hours';
+import { LatLng, RecommendationScorer } from '@services/recommendation-scorer';
 
 type SortMode = 'random' | 'near' | 'rating';
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import Papa from 'papaparse';
-import { Restaurant } from '../models/restaurant';
+import { Restaurant } from '@shared/models/restaurant';
 
 /** 店名列として認識する候補キー（ヘッダー行の判定・値の抽出の両方で使う）。 */
 const NAME_COLUMN_KEYS = ['title', 'name', 'タイトル', '名前', '店名'];

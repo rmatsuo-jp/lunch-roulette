@@ -14,8 +14,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { APP_VERSION, RELEASE_DATE } from '../../../version';
-import { SettingsStore, ThemePreference } from '../../services/settings-store';
-import { AuthService } from '../../core/firebase/auth.service';
+import { SettingsStore, ThemePreference } from '@services/settings-store';
+import { AuthService } from '@core/firebase/auth.service';
 
 @Component({
   selector: 'app-settings',

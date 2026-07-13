@@ -7,9 +7,9 @@
  */
 import { effect, Injectable, inject } from '@angular/core';
 import { collection, doc, getDocs, setDoc } from 'firebase/firestore';
-import { Restaurant } from '../models/restaurant';
-import { AuthService } from '../core/firebase/auth.service';
-import { firestore } from '../core/firebase/firebase.init';
+import { Restaurant } from '@shared/models/restaurant';
+import { AuthService } from '@core/firebase/auth.service';
+import { firestore } from '@core/firebase/firebase.init';
 import { RestaurantStore } from './restaurant-store';
 
 @Injectable({ providedIn: 'root' })

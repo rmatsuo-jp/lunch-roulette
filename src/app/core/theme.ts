@@ -9,7 +9,7 @@
  * `App` コンポーネントで注入するだけで起動する（他では未使用のため注入のみ必要）。
  */
 import { DestroyRef, Injectable, effect, inject } from '@angular/core';
-import { SettingsStore } from '../services/settings-store';
+import { SettingsStore } from '@services/settings-store';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {

@@ -4,7 +4,7 @@
  * PlacesEnrichment / GoogleMapsLoader / App コンポーネントから参照される。
  */
 import { Injectable, computed, effect, signal } from '@angular/core';
-import { readJson, writeJson } from '../core/storage';
+import { readJson, writeJson } from '@core/storage';
 
 const STORAGE_KEY = 'lunch-roulette.settings.v1';
 

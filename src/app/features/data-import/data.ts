@@ -6,14 +6,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
-import { Restaurant } from '../../models/restaurant';
-import { GENRE_OPTIONS, MOOD_OPTIONS } from '../../models/tags';
-import { RestaurantStore } from '../../services/restaurant-store';
-import { CsvImport } from '../../services/csv-import';
-import { PlacesEnrichment } from '../../services/places-enrichment';
-import { mapPlaceTypesToGenres } from '../../services/places-genre-map';
-import { FileDownloadService } from '../../shared/services/file-download';
-import { ConfirmDialog } from '../../shared/ui/confirm-dialog/confirm-dialog';
+import { Restaurant } from '@shared/models/restaurant';
+import { GENRE_OPTIONS, MOOD_OPTIONS } from '@shared/models/tags';
+import { RestaurantStore } from '@services/restaurant-store';
+import { CsvImport } from '@services/csv-import';
+import { PlacesEnrichment } from '@services/places-enrichment';
+import { mapPlaceTypesToGenres } from '@services/places-genre-map';
+import { FileDownloadService } from '@shared/services/file-download';
+import { ConfirmDialog } from '@shared/ui/confirm-dialog/confirm-dialog';
 
 /** 取り込み & タグ付け画面：CSV 取込、ジャンル/気分タグ編集、JSON 入出力。 */
 @Component({

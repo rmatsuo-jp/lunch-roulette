@@ -3,7 +3,7 @@
  * 「あと何分で閉店するか」を計算する。深夜跨ぎ（例: 23:00〜翌1:00）に対応するため、
  * 全ての時刻を「その週の日曜0時からの経過分」に正規化して比較する。
  */
-import { OpeningPeriod } from '../models/places';
+import { OpeningPeriod } from '@shared/models/places';
 
 const MINUTES_PER_WEEK = 7 * 24 * 60;
 

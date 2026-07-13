@@ -11,9 +11,9 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { MatIconModule } from '@angular/material/icon';
 import { filter, map } from 'rxjs';
 import { environment } from '../environments/environment';
-import { ThemeService } from './core/theme';
-import { BottomNavHeightService } from './core/layout/bottom-nav-height';
-import { RestaurantSyncService } from './services/restaurant-sync.service';
+import { ThemeService } from '@core/theme';
+import { BottomNavHeightService } from '@core/layout/bottom-nav-height';
+import { RestaurantSyncService } from '@services/restaurant-sync.service';
 
 @Component({
   selector: 'app-root',

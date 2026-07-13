@@ -7,9 +7,9 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { environment } from '../../../environments/environment';
-import { RestaurantStore } from '../../services/restaurant-store';
-import { SettingsStore } from '../../services/settings-store';
-import { AuthService } from '../../core/firebase/auth.service';
+import { RestaurantStore } from '@services/restaurant-store';
+import { SettingsStore } from '@services/settings-store';
+import { AuthService } from '@core/firebase/auth.service';
 
 @Component({
   selector: 'app-dev',
