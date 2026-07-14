@@ -1,0 +1,9 @@
+<google-map height="320px" width="100%" [center]="center()" [zoom]="13">
+  @for (m of markers(); track m.restaurant.id) {
+    <map-marker
+      [position]="m.position"
+      [title]="m.restaurant.name"
+      (mapClick)="markerClick.emit(m.restaurant)"
+    />
+  }
+</google-map>

@@ -59,118 +59,14 @@
     </h3>
 
     @for (r of group.items; track r.id) {
-      <mat-card class="row" appearance="outlined">
-        <mat-card-content>
-          <div class="row-head">
-            <div class="row-name">
-              {{ r.name }}
-              @if (r.url) {
-                <a class="map-link" [href]="r.url" target="_blank" rel="noopener" title="Google Map で開く">
-                  <mat-icon>map</mat-icon>
-                </a>
-              }
-            </div>
-            <button mat-icon-button (click)="remove(r)" aria-label="削除">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
-          @if (r.note) { <p class="note muted">{{ r.note }}</p> }
-
-          <div class="places-info">
-            @if (r.places && !r.places.fetchError) {
-              <span class="places-chip muted">
-                <mat-icon inline>place</mat-icon>
-                @if (r.places.rating) { {{ r.places.rating }}★ ({{ r.places.userRatingsTotal }}件) }
-                @else { 座標取得済み }
-              </span>
-              <button mat-button (click)="enrichOne(r)" [disabled]="enriching().has(r.id)">
-                <mat-icon>refresh</mat-icon> 再取得
-              </button>
-            } @else {
-              @if (r.places?.fetchError) {
-                <span class="places-error">取得失敗: {{ r.places?.fetchError }}</span>
-              }
-              <button mat-button (click)="enrichOne(r)" [disabled]="enriching().has(r.id)">
-                <mat-icon>travel_explore</mat-icon>
-                {{ enriching().has(r.id) ? '取得中…' : '地図情報を取得' }}
-              </button>
-            }
-          </div>
-
-          @if (r.places && !r.places.fetchError) {
-            <div class="places-detail">
-              @if (r.places.address) {
-                <div class="places-detail-row places-address">
-                  <mat-icon inline>location_on</mat-icon>
-                  <span>{{ r.places.address }}</span>
-                </div>
-              }
-              @if (r.places.priceLevel !== undefined) {
-                <div class="places-detail-row places-price">
-                  <mat-icon inline>payments</mat-icon>
-                  <span>{{ priceLevelText(r.places.priceLevel) }}</span>
-                </div>
-              }
-              @if (r.places.openingHoursText?.length) {
-                <div class="places-detail-row places-hours">
-                  <button
-                    mat-button
-                    class="hours-toggle"
-                    (click)="toggleHours(r)"
-                  >
-                    <mat-icon inline>schedule</mat-icon>
-                    営業時間
-                    <mat-icon inline>{{ expandedHours().has(r.id) ? 'expand_less' : 'expand_more' }}</mat-icon>
-                  </button>
-                  @if (expandedHours().has(r.id)) {
-                    <ul class="hours-list">
-                      @for (line of r.places.openingHoursText; track line) {
-                        <li>{{ line }}</li>
-                      }
-                    </ul>
-                  }
-                </div>
-              }
-              @if (r.places.types?.length) {
-                <div class="places-detail-row places-types">
-                  <mat-icon inline>sell</mat-icon>
-                  @for (t of r.places.types; track t) {
-                    <span class="type-chip chip-pill">{{ t }}</span>
-                  }
-                </div>
-              }
-            </div>
-          }
-
-          <div class="tag-fields">
-            <mat-form-field appearance="outline" class="tag-field" subscriptSizing="dynamic">
-              <mat-label>ジャンル</mat-label>
-              <mat-select
-                multiple
-                [value]="r.genres"
-                (selectionChange)="setGenres(r, $event.value)"
-              >
-                @for (opt of genreOptions; track opt) {
-                  <mat-option [value]="opt">{{ opt }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="tag-field" subscriptSizing="dynamic">
-              <mat-label>気分・その他</mat-label>
-              <mat-select
-                multiple
-                [value]="r.moods"
-                (selectionChange)="setMoods(r, $event.value)"
-              >
-                @for (opt of moodOptions; track opt) {
-                  <mat-option [value]="opt">{{ opt }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-          </div>
-        </mat-card-content>
-      </mat-card>
+      <app-restaurant-tag-editor
+        [restaurant]="r"
+        [enriching]="enriching().has(r.id)"
+        (genresChange)="setGenres(r, $event)"
+        (moodsChange)="setMoods(r, $event)"
+        (removeRequested)="remove(r)"
+        (enrichRequested)="enrichOne(r)"
+      />
     }
   </section>
 }

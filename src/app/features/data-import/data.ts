@@ -2,29 +2,21 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { Restaurant } from '@shared/models/restaurant';
-import { GENRE_OPTIONS, MOOD_OPTIONS } from '@shared/models/tags';
 import { RestaurantStore } from '@services/restaurant-store';
 import { CsvImport } from '@services/csv-import';
 import { PlacesEnrichment } from '@services/places-enrichment';
 import { mapPlaceTypesToGenres } from '@services/places-genre-map';
 import { FileDownloadService } from '@shared/services/file-download';
 import { ConfirmDialog } from '@shared/ui/confirm-dialog/confirm-dialog';
+import { RestaurantTagEditor } from './restaurant-tag-editor/restaurant-tag-editor';
 
 /** 取り込み & タグ付け画面：CSV 取込、ジャンル/気分タグ編集、JSON 入出力。 */
 @Component({
   selector: 'app-data',
-  imports: [
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatSelectModule,
-  ],
+  imports: [MatCardModule, MatButtonModule, MatIconModule, RestaurantTagEditor],
   templateUrl: './data.html',
   styleUrl: './data.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,12 +34,6 @@ export class Data {
 
   /** 地図情報を取得中の店舗 ID 集合（ボタンの多重クリック防止・スピナー表示用）。 */
   readonly enriching = signal<Set<string>>(new Set());
-  /** 営業時間（曜日別）を展開表示中の店舗 ID 集合。 */
-  readonly expandedHours = signal<Set<string>>(new Set());
-
-  /** ジャンル／気分の選択肢（選択式入力用）。 */
-  readonly genreOptions = GENRE_OPTIONS;
-  readonly moodOptions = MOOD_OPTIONS;
 
   /** エリア別にグルーピングした表示用データ。 */
   readonly groups = computed(() => {
@@ -171,21 +157,6 @@ export class Data {
         return next;
       });
     }
-  }
-
-  /** 営業時間（曜日別テキスト）の開閉トグル。 */
-  toggleHours(r: Restaurant): void {
-    this.expandedHours.update((set) => {
-      const next = new Set(set);
-      if (next.has(r.id)) next.delete(r.id);
-      else next.add(r.id);
-      return next;
-    });
-  }
-
-  /** Places の価格帯（0〜4）を「￥」表示に変換。 */
-  priceLevelText(level: number): string {
-    return level <= 0 ? '無料' : '￥'.repeat(level);
   }
 
   private notify(message: string): void {

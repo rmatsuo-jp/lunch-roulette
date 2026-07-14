@@ -32,12 +32,17 @@ export class RecommendationScorer {
     return ratings.reduce((sum, v) => sum + v, 0) / ratings.length;
   }
 
-  /** ベイズ平均による評価スコア（レビュー件数が少ない店を過大評価しない）＋距離減点＋被り減点。 */
+  /**
+   * ベイズ平均による評価スコア（レビュー件数が少ない店を過大評価しない）＋距離減点＋被り減点。
+   * `precomputedDistance` を渡した場合はHaversine距離の再計算を省略する
+   * （呼び出し側が複数店舗を一括評価する際に、事前計算済みの距離Mapを使い回すため）。
+   */
   scoreOf(
     r: Restaurant,
     pos: LatLng | null,
     recentIds: string[],
     globalMeanRating: number,
+    precomputedDistance?: number,
   ): number {
     const p = r.places;
     let score = 0;
@@ -48,7 +53,7 @@ export class RecommendationScorer {
     }
 
     if (pos) {
-      const dist = this.distance(pos, r);
+      const dist = precomputedDistance ?? this.distance(pos, r);
       if (Number.isFinite(dist)) {
         score -= dist * DISTANCE_PENALTY_PER_KM;
       }
@@ -61,14 +66,14 @@ export class RecommendationScorer {
     return score;
   }
 
-  /** おすすめカードに表示する選定理由の1行サマリー。 */
-  reasonFor(r: Restaurant, pos: LatLng | null): string {
+  /** おすすめカードに表示する選定理由の1行サマリー。`precomputedDistance` の意図は `scoreOf` と同じ。 */
+  reasonFor(r: Restaurant, pos: LatLng | null, precomputedDistance?: number): string {
     const parts: string[] = [];
     if (r.places?.rating != null) {
       parts.push(`評価 ${r.places.rating}（${r.places.userRatingsTotal ?? 0}件）`);
     }
     if (pos) {
-      const dist = this.distance(pos, r);
+      const dist = precomputedDistance ?? this.distance(pos, r);
       if (Number.isFinite(dist)) {
         parts.push(
           dist < NEAR_DISTANCE_DISPLAY_THRESHOLD_KM

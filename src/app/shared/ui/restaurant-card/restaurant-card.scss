@@ -1,0 +1,45 @@
+.item-name {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.area-tag,
+.tag {
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+}
+
+.area-tag {
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+}
+
+.tag.mood {
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+}
+
+.note {
+  margin: 6px 0;
+  white-space: pre-wrap;
+}
+
+.map-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.85rem;
+}
+
+.places-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}

@@ -1,0 +1,19 @@
+<mat-card class="item" appearance="outlined">
+  <mat-card-content>
+    <div class="item-name">{{ restaurant().name }}</div>
+    <div class="tags">
+      <span class="area-tag chip-pill">{{ restaurant().area }}</span>
+      @for (g of restaurant().genres; track g) { <span class="tag chip-pill">{{ g }}</span> }
+      @for (m of restaurant().moods; track m) { <span class="tag mood chip-pill">{{ m }}</span> }
+    </div>
+    @if (restaurant().places?.rating) {
+      <span class="places-chip muted"><mat-icon inline>star</mat-icon> {{ restaurant().places?.rating }}</span>
+    }
+    @if (restaurant().note) { <p class="note muted">{{ restaurant().note }}</p> }
+    @if (restaurant().url) {
+      <a class="map-link" [href]="restaurant().url" target="_blank" rel="noopener">
+        <mat-icon>map</mat-icon> 地図
+      </a>
+    }
+  </mat-card-content>
+</mat-card>
