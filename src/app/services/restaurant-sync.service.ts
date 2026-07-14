@@ -4,6 +4,11 @@
  * ログインした瞬間にクラウドと双方向同期する。以降のローカル変更（追加・編集・削除）も
  * effect() で自動検知し、ログイン中であればクラウドへ反映する。
  * 削除は物理削除せず deleted フラグ（tombstone）で表現し、削除も多端末へ伝播させる。
+ *
+ * 自動 push は「直前に同期したスナップショットとの差分」のみを Firestore へ書き込む
+ * （diff-basedスナップショット方式）。タグ1件の編集のような1件だけの変更でも
+ * 全件 setDoc していた従来実装は、店舗数に比例した無駄な書き込み（コスト・レイテンシ）を
+ * 生んでいたため、変更があったドキュメントのみを書き込むように変更している。
  */
 import { effect, Injectable, inject } from '@angular/core';
 import { collection, doc, getDocs, setDoc } from 'firebase/firestore';
@@ -20,11 +25,21 @@ export class RestaurantSyncService {
   // syncFromCloud() によるローカル書き戻し中は、下の自動 push effect を発火させないための抑制フラグ。
   private suppressPush = false;
 
+  // 直前にクラウドと同期済みの内容（id -> Restaurant）。自動 push 時にこれとの差分だけを書き込む。
+  // null は「まだ一度も同期していない（syncFromCloud未実行、またはログインユーザー切替直後）」を表す。
+  private lastSynced: Map<string, Restaurant> | null = null;
+
   constructor() {
     // ログイン状態を監視し、ログインした瞬間にクラウドと双方向同期する。
     // ログアウト時（user が null）はローカルキャッシュをそのまま残す。
+    // ユーザーが切り替わった場合は差分スナップショットをリセットし、新ユーザーの内容と誤って比較しないようにする。
+    let lastUid: string | null = null;
     effect(() => {
       const user = this.auth.user();
+      if (user?.uid !== lastUid) {
+        lastUid = user?.uid ?? null;
+        this.lastSynced = null;
+      }
       if (user) {
         this.syncFromCloud(user.uid).catch(err =>
           console.error('[RestaurantSyncService] クラウド同期に失敗:', err)
@@ -32,12 +47,14 @@ export class RestaurantSyncService {
       }
     });
 
-    // ログイン中のローカル変更（追加・編集・削除）を検知し、クラウドへ自動反映する。
+    // ログイン中のローカル変更（追加・編集・削除）を検知し、変更分のみクラウドへ自動反映する。
     effect(() => {
       const list = this.store.allRestaurants();
       const uid = this.auth.user()?.uid;
       if (!uid || this.suppressPush) return;
-      this.pushAll(uid, list).catch(err =>
+      const changed = this.diffChanged(list);
+      if (changed.length === 0) return;
+      this.pushChanged(uid, changed).catch(err =>
         console.error('[RestaurantSyncService] 自動同期(push)に失敗:', err)
       );
     });
@@ -62,8 +79,19 @@ export class RestaurantSyncService {
     return data;
   }
 
-  // ログイン中の全件をクラウドへ upsert する（fire-and-forget で呼ばれる想定）。
-  private async pushAll(uid: string, restaurants: Restaurant[]): Promise<void> {
+  // `list` のうち `lastSynced` から内容が変わった（または新規の）ものだけを返す。
+  // 呼び出し後、次回比較のために `lastSynced` を `list` のスナップショットで更新する。
+  private diffChanged(list: Restaurant[]): Restaurant[] {
+    const previous = this.lastSynced;
+    const changed = previous
+      ? list.filter(r => JSON.stringify(previous.get(r.id)) !== JSON.stringify(r))
+      : list; // 初回（まだ同期スナップショットが無い）は全件を変更扱いにする
+    this.lastSynced = new Map(list.map(r => [r.id, r]));
+    return changed;
+  }
+
+  // 指定した店舗分だけをクラウドへ upsert する（fire-and-forget で呼ばれる想定）。
+  private async pushChanged(uid: string, restaurants: Restaurant[]): Promise<void> {
     if (restaurants.length === 0) return;
     await Promise.all(
       restaurants.map(r => setDoc(this.restaurantDoc(uid, r.id), this.toDocData(r)))
@@ -103,6 +131,10 @@ export class RestaurantSyncService {
       await Promise.all(
         toPush.map(r => setDoc(this.restaurantDoc(uid, r.id), this.toDocData(r)))
       );
+
+      // このメソッド終了後、自動 push effect が発火した際に merged 全件を「変更あり」と
+      // 誤検知しないよう、同期済みスナップショットとして merged を記録しておく。
+      this.lastSynced = new Map(merged.map(r => [r.id, r]));
     } finally {
       this.suppressPush = false;
     }
