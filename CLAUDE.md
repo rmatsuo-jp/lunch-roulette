@@ -47,7 +47,7 @@ Google Mapの保存リスト（CSV）取込→ジャンル・気分タグ絞込�
 - **Conventional Commits + semantic-release**で自動採番。`package.json`の`version`は手動編集禁止。
 - mainへのpushでGitHub Actionsが次バージョン判定、タグ/GitHub Release/`CHANGELOG.md`生成。
   - `fix:`/`perf:`→PATCH、`feat:`→MINOR、`feat!:`/`BREAKING CHANGE:`→MAJOR。`docs:` `chore:` `refactor:` `style:` `test:` `ci:`は上昇なし。
-- `src/version.ts`（`APP_VERSION`/`RELEASE_DATE`）は**リリース時のみ**semantic-releaseが`scripts/generate-version.mjs`実行で更新。`npm start`/`npm run build`では再生成されない。
+- `src/version.ts`（`APP_VERSION`/`RELEASE_DATE`）は`scripts/generate-version.mjs`が生成。git追跡外（`.gitignore`）のため、リリース時（semantic-releaseの`prepareCmd`）に加えて`prestart`/`prebuild`/`prewatch`/`pretest`でも自動生成される（クローン直後にビルドが落ちるのを防ぐため）。手動編集禁止。
 - 設定（`.releaserc.json`）は3プロジェクト共通。
 
 ## 開発サーバーのポート
