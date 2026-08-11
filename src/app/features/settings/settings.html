@@ -1,4 +1,5 @@
-<!-- @file 設定ページテンプレート。表示テーマ・Google Maps APIキー設定・クラウド同期・バージョン情報カードを表示する。 -->
+<!-- @file 設定ページテンプレート。表示テーマ・Google Maps APIキー設定・クラウド同期を表示し、
+     末尾にバージョン情報カード（app-release-notes-panel）を置く。 -->
 <mat-card class="page-section theme-card" appearance="outlined">
   <mat-card-content>
     <h2 class="section-title">
@@ -33,8 +34,8 @@
       Google Maps API キー
     </h2>
     <p class="muted">
-      地図情報の取得（ジャンル・評価・営業時間・地図表示）に使う API キーを登録します。
-      Google Cloud Console で <strong>Places API (New)</strong> と
+      地図情報の取得（ジャンル・評価・営業時間・地図表示）に使う API キーを登録します。 Google Cloud
+      Console で <strong>Places API (New)</strong> と
       <strong>Maps JavaScript API</strong> を有効化し、HTTP リファラー制限をかけたキーを
       発行してから入力してください。キーはこの端末の localStorage にのみ保存されます。
     </p>
@@ -164,17 +165,4 @@
   </mat-card-content>
 </mat-card>
 
-<mat-card class="page-section version-card" appearance="outlined">
-  <mat-card-content>
-    <h2 class="section-title">
-      <mat-icon>info</mat-icon>
-      バージョン情報
-    </h2>
-    <dl class="definition-list">
-      <dt>バージョン</dt>
-      <dd>{{ version }}</dd>
-      <dt>リリース日</dt>
-      <dd>{{ releaseDate }}</dd>
-    </dl>
-  </mat-card-content>
-</mat-card>
+<app-release-notes-panel />

@@ -1,0 +1,6 @@
+/* @file バージョン情報カードのスタイル。リリースノート一覧は長くなるため高さを制限してスクロールさせる。 */
+.release-notes-list {
+  max-height: 320px;
+  overflow-y: auto;
+  margin-top: 4px;
+}

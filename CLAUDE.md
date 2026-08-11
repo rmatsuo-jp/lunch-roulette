@@ -30,12 +30,13 @@ Google Mapの保存リスト（CSV）取込→ジャンル・気分タグ絞込�
 - `services/opening-hours.ts` — `getRemainingOpenMinutes()`。日またぎ営業・24時間営業（Places APIが`close`を返さない区間＝`alwaysOpen`）にも対応した「残り営業時間（分）」算出の純粋関数。`recommend/`の余裕時間フィルタで使用。
 - `services/places-utils.ts` — `hasValidLocation()`/`locationOf()`。Places取得失敗レコード（`lat:0,lng:0,fetchError`）を「座標あり」と誤判定しないための共有判定。地図表示・距離計算はすべてここを経由する。
 - `services/settings-store.ts` — `googleMapsApiKey`（設定画面入力値）・テーマ・昼休み時間をlocalStorage永続化。`environment.ts`値より優先。
+- `core/release-notes/` — `ReleaseNotesService`（`CHANGELOG.md`をfetchしてバージョン別にパース、既読バージョンをlocalStorage管理）と起動時の新機能モーダル`WhatsNewDialog`。初回起動時は現在バージョンを黙って既読にしてモーダルを出さない。表示部品は`shared/ui/release-note-entry/`（設定画面と共通）。
 - `core/firebase/firebase.init.ts` — Firebase App/Auth/Firestoreの初期化。
 - `core/firebase/auth.service.ts` — `AuthService`。Googleポップアップログイン、`auth.constants.ts`のメールアドレスホワイトリストでログイン可否判定。
 - `services/restaurant-sync.service.ts` — `RestaurantSyncService`。ログイン済みの場合のみ動作するFirestore双方向同期。id単位マージで、内容は`updatedAt`が新しい側を採用（同時刻はローカル優先）、削除は片方でも削除なら削除（tombstone伝播）。以後`effect()`で差分のみ自動push。同期済みスナップショットは**書き込み成功後**に更新する（失敗分を再送するため）。エラーは`syncError` signalで設定画面に表示。未ログイン時は一切通信しない。
 - `pages/recommend/` — タグ絞込ランチ提案（トップページ）。地図表示、現在地距離順/評価順ソート、評価・レビュー件数・距離・直近被り回避を加味したスコアリングで1件選出（`RestaurantStore.recentPickedIds`で被り回避、同点はランダム）。フィルタ/ソート状態（`RecommendFilterService`/`RecommendSortService`）は**コンポーネントスコープ**で提供する（画面固有のUI状態のため）。
 - `pages/data/` — CSV取込&タグ付け・データ管理・Places情報取得ボタン。
-- `pages/settings/` — バージョン情報＋Google Maps APIキー入力/保存、テーマ・昼休み時間設定、Googleログイン/ログアウト。
+- `pages/settings/` — Google Maps APIキー入力/保存、テーマ・昼休み時間設定、Googleログイン/ログアウト。バージョン情報と「リリースノートを見る」は`release-notes-panel/`に分離。
 - `pages/dev/` — 開発時のみの診断画面（ストア件数・生JSON・環境情報等）。`environment.production`により本番ルートから除外。
 - `environments/` — `googleMapsApiKey`の開発用フォールバック。実運用は設定画面登録キー（`SettingsStore`）優先。HTTPリファラー制限・Places API限定の制限キーをクライアント公開する前提。
 
@@ -50,7 +51,8 @@ Google Mapの保存リスト（CSV）取込→ジャンル・気分タグ絞込�
 - **Conventional Commits + semantic-release**で自動採番。`package.json`の`version`は手動編集禁止。
 - mainへのpushでGitHub Actionsが次バージョン判定、タグ/GitHub Release/`CHANGELOG.md`生成。
   - `fix:`/`perf:`→PATCH、`feat:`→MINOR、`feat!:`/`BREAKING CHANGE:`→MAJOR。`docs:` `chore:` `refactor:` `style:` `test:` `ci:`は上昇なし。
-- `src/version.ts`（`APP_VERSION`/`RELEASE_DATE`）は`scripts/generate-version.mjs`が生成。git追跡外（`.gitignore`）のため、リリース時（semantic-releaseの`prepareCmd`）に加えて`prestart`/`prebuild`/`prewatch`/`pretest`でも自動生成される（クローン直後にビルドが落ちるのを防ぐため）。手動編集禁止。
+- `src/version.ts`（`APP_VERSION`/`RELEASE_DATE`）は`scripts/generate-version.mjs`が**リリース時のみ**生成（semantic-releaseの`prepareCmd`）。`npm start`/`build`では再生成しない（毎回`RELEASE_DATE`の差分が出るため）。`.gitignore`に載っているが`.releaserc.json`の`assets`に含まれるためgit追跡済みで、クローン直後もビルドできる。手動編集禁止。
+- リリースノートは`CHANGELOG.md`が正典。`angular.json`のassetsでビルド成果物直下へ配信し、`core/release-notes/`が実行時にfetchして表示する（UI用に文言を二重管理しない）。
 - 設定（`.releaserc.json`）は3プロジェクト共通。
 
 ## 開発サーバーのポート
