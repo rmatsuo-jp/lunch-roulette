@@ -1,3 +1,17 @@
+## [0.6.1](https://github.com/rmatsuo-jp/lunch-roulette/compare/v0.6.0...v0.6.1) (2026-08-11)
+
+
+### Bug Fixes
+
+* Google Maps APIのライブラリ読込完了を待ってから地図を描画する ([908a245](https://github.com/rmatsuo-jp/lunch-roulette/commit/908a245a529b49b5f5acadc5e90e5da57f02a6cd))
+* 意図しない高額課金を防ぐため一括Places情報取得ボタンを削除 ([4239964](https://github.com/rmatsuo-jp/lunch-roulette/commit/4239964135252038fea73cf6ecb886edfb3ed03b))
+* 調査で判明した実害のある不具合とリスクをまとめて修正 ([fc92d91](https://github.com/rmatsuo-jp/lunch-roulette/commit/fc92d910e672b573d158d1f94a16b92f3a86ea29))
+
+
+### Performance Improvements
+
+* Firestore自動同期をdiff-basedスナップショット方式に変更 ([22e5f5e](https://github.com/rmatsuo-jp/lunch-roulette/commit/22e5f5e6f974a07290dfbdd15efacc2778fa9494))
+
 # [0.6.0](https://github.com/rmatsuo-jp/lunch-roulette/compare/v0.5.0...v0.6.0) (2026-07-12)
 
 
