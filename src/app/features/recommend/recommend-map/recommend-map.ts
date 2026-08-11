@@ -6,6 +6,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output, viewChild } from '@angular/core';
 import { GoogleMap, MapMarker } from '@angular/google-maps';
 import { Restaurant } from '@shared/models/restaurant';
+import { locationOf } from '@services/places-utils';
 
 @Component({
   selector: 'app-recommend-map',
@@ -21,11 +22,13 @@ export class RecommendMap {
 
   private readonly map = viewChild(GoogleMap);
 
+  // 座標を持たない・Places 取得に失敗した店は除外する。0 で埋めると (0,0) にマーカーが立ち、
+  // fitBounds がそれを含めて地図全体をズームアウトさせてしまうため。
   protected readonly markers = computed(() =>
-    this.restaurants().map((r) => ({
-      restaurant: r,
-      position: { lat: r.places?.lat ?? 0, lng: r.places?.lng ?? 0 } as google.maps.LatLngLiteral,
-    })),
+    this.restaurants().flatMap((r) => {
+      const position = locationOf(r);
+      return position ? [{ restaurant: r, position }] : [];
+    }),
   );
 
   constructor() {

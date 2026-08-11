@@ -32,6 +32,9 @@ export class Data {
   readonly restaurants = this.store.restaurants;
   readonly total = computed(() => this.restaurants().length);
 
+  /** 保存失敗・データ破損の警告（正常時は null）。黙って失敗するとデータを失うため画面に出す。 */
+  readonly storageWarning = this.store.storageWarning;
+
   /** 地図情報を取得中の店舗 ID 集合（ボタンの多重クリック防止・スピナー表示用）。 */
   readonly enriching = signal<Set<string>>(new Set());
 
@@ -56,14 +59,17 @@ export class Data {
     if (!input.files?.length) return;
     this.importing.set(true);
     try {
-      const parsed = await this.csv.parseFiles(input.files);
-      const added = this.store.addMany(parsed);
-      const skipped = parsed.length - added;
+      const { restaurants, warnings } = await this.csv.parseFilesDetailed(input.files);
+      const added = this.store.addMany(restaurants);
+      const skipped = restaurants.length - added;
       this.notify(
-        `${added}件を取り込みました` + (skipped > 0 ? `（重複 ${skipped}件はスキップ）` : ''),
+        `${added}件を取り込みました` +
+          (skipped > 0 ? `（重複 ${skipped}件はスキップ）` : '') +
+          // パースエラーを黙って捨てると、列ズレで欠落した行に気付けない
+          (warnings.length > 0 ? `。CSV に問題があります: ${warnings.join(' / ')}` : ''),
       );
     } catch (e) {
-      this.notify('CSV の取り込みに失敗しました: ' + (e as Error).message);
+      this.notify('CSV の取り込みに失敗しました: ' + this.describeError(e));
     } finally {
       this.importing.set(false);
       input.value = ''; // 同じファイルを再選択できるようリセット
@@ -85,7 +91,7 @@ export class Data {
           (skipped > 0 ? `（重複 ${skipped}件はスキップ）` : ''),
       );
     } catch (e) {
-      this.notify('サンプルデータの取得に失敗しました: ' + (e as Error).message);
+      this.notify('サンプルデータの取得に失敗しました: ' + this.describeError(e));
     } finally {
       this.importing.set(false);
     }
@@ -131,7 +137,7 @@ export class Data {
       const count = this.store.importJson(await file.text());
       this.notify(`${count}件を読み込みました`);
     } catch (e) {
-      this.notify('JSON の読み込みに失敗しました: ' + (e as Error).message);
+      this.notify('JSON の読み込みに失敗しました: ' + this.describeError(e));
     } finally {
       input.value = '';
     }
@@ -157,6 +163,11 @@ export class Data {
         return next;
       });
     }
+  }
+
+  /** 例外の説明。Error 以外が投げられても "undefined" と表示しないようにする。 */
+  private describeError(e: unknown): string {
+    return e instanceof Error ? e.message : String(e);
   }
 
   private notify(message: string): void {

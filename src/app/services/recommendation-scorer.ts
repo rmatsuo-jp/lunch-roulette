@@ -4,6 +4,7 @@
  */
 import { Injectable } from '@angular/core';
 import { Restaurant } from '@shared/models/restaurant';
+import { hasValidLocation } from './places-utils';
 
 export interface LatLng {
   lat: number;
@@ -85,10 +86,10 @@ export class RecommendationScorer {
     return parts.length > 0 ? parts.join('・') : 'データに基づくおすすめ';
   }
 
-  /** 現在地からの直線距離（km、Haversine公式）。座標未取得の店は Infinity 扱い。 */
+  /** 現在地からの直線距離（km、Haversine公式）。座標未取得・取得失敗の店は Infinity 扱い。 */
   distance(pos: LatLng, r: Restaurant): number {
-    const p = r.places;
-    if (!p || (p.lat === 0 && p.lng === 0)) return Infinity;
+    if (!hasValidLocation(r)) return Infinity;
+    const p = r.places!;
     const dLat = this.toRad(p.lat - pos.lat);
     const dLng = this.toRad(p.lng - pos.lng);
     const a =

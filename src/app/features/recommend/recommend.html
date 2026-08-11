@@ -56,9 +56,14 @@
       <mat-icon>casino</mat-icon>
       ランダムで決めて（{{ filtered().length }}件から）
     </button>
-    <button mat-flat-button color="accent" (click)="pickRecommended()" [disabled]="filtered().length === 0">
+    <button
+      mat-flat-button
+      color="accent"
+      (click)="pickRecommended()"
+      [disabled]="filtered().length === 0 || picking()"
+    >
       <mat-icon>auto_awesome</mat-icon>
-      今日のおすすめ
+      @if (picking()) { 現在地を確認中… } @else { 今日のおすすめ }
     </button>
     @if (hasFilter()) {
       <button mat-stroked-button (click)="clearFilters()">
@@ -132,9 +137,9 @@
               <span class="places-chip muted"><mat-icon inline>schedule</mat-icon> {{ p.places.openingHoursText![0] }}</span>
             }
           </div>
-          @if (mapsReady()) {
-            <google-map height="220px" width="100%" [center]="mapCenter(p)" [zoom]="16">
-              <map-marker [position]="mapCenter(p)" [title]="p.name" />
+          @if (mapsReady() && mapCenter(p); as center) {
+            <google-map height="220px" width="100%" [center]="center" [zoom]="16">
+              <map-marker [position]="center" [title]="p.name" />
             </google-map>
           }
         } @else {

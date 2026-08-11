@@ -61,10 +61,17 @@ export class GoogleMapsLoader {
   private appendScript(apiKey: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async`;
+      // キーは設定画面のユーザー入力。そのまま連結すると `&` や `#` を含む値で
+      // クエリ文字列を汚染できてしまうため、必ずエスケープする。
+      const params = new URLSearchParams({ key: apiKey, loading: 'async' });
+      script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
       script.async = true;
       script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Google Maps スクリプトの読み込みに失敗しました'));
+      script.onerror = () => {
+        // 失敗したスクリプトタグを残すと、再試行のたびに head へ重複挿入されてしまう。
+        script.remove();
+        reject(new Error('Google Maps スクリプトの読み込みに失敗しました'));
+      };
       document.head.appendChild(script);
     });
   }

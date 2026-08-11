@@ -69,9 +69,25 @@ export class AuthService {
     try {
       await signInWithPopup(auth, provider);
     } catch (err) {
+      // ユーザー自身が popup を閉じた／連打で前の popup がキャンセルされた場合は
+      // 「ログインをやめた」という意思表示なので、全画面リダイレクトを始めない。
+      if (this.isUserCancelled(err)) {
+        console.info('[AuthService] ユーザーがログインをキャンセルしました');
+        return;
+      }
       console.warn('[AuthService] popup ログイン失敗、redirect に切替:', err);
       await signInWithRedirect(auth, provider);
     }
+  }
+
+  /** popup の失敗がユーザー起因のキャンセルかどうか。 */
+  private isUserCancelled(err: unknown): boolean {
+    const code = (err as { code?: string } | null)?.code;
+    return (
+      code === 'auth/popup-closed-by-user' ||
+      code === 'auth/cancelled-popup-request' ||
+      code === 'auth/user-cancelled'
+    );
   }
 
   // ── ログアウト ────────────────────────────────────────────────────

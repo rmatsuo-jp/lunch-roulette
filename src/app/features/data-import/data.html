@@ -1,3 +1,11 @@
+@if (storageWarning(); as warning) {
+  <mat-card class="page-section storage-warning" appearance="outlined">
+    <mat-card-content>
+      <p><mat-icon inline>warning</mat-icon> {{ warning }}</p>
+    </mat-card-content>
+  </mat-card>
+}
+
 <mat-card class="page-section intro" appearance="outlined">
   <mat-card-content>
     <h2 class="section-title">

@@ -18,7 +18,9 @@ export const routes: Routes = [
     title: '設定',
     loadComponent: () => import('@features/settings/settings').then((m) => m.Settings),
   },
-  // 開発用タブは本番ビルドでは存在させない（isDev による app.html のナビ表示制御と対応）
+  // 開発用タブは本番ビルドでは存在させない（isDev による app.html のナビ表示制御と対応）。
+  // `environment.production` は本番ビルドで定数畳み込みされるため、この分岐ごと除去され
+  // dev の遅延チャンク自体が dist に出力されない（`npm run build` の出力で確認済み）。
   ...(!environment.production
     ? [
         {

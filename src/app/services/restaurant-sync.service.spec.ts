@@ -213,4 +213,136 @@ describe('RestaurantSyncService', () => {
 
     expect(store.restaurants().map((r) => r.id).sort()).toEqual(['1', '9']);
   });
+
+  describe('updatedAt による内容マージ', () => {
+    it('クラウド側の更新が新しければローカルを上書きする', async () => {
+      // ローカルは古い内容（端末Aで放置）
+      await startWithLocal([makeRestaurant('1', { genres: ['和食'], updatedAt: 1000 })]);
+      // クラウドは端末Bで後から編集された内容
+      setCloudDocs([makeRestaurant('1', { genres: ['ラーメン'], updatedAt: 2000 })]);
+
+      auth.user.set({ uid: 'user-a' });
+      await flush();
+
+      expect(store.restaurants()[0].genres).toEqual(['ラーメン']);
+    });
+
+    it('ローカル側の更新が新しければクラウドを上書きし push する', async () => {
+      await startWithLocal([makeRestaurant('1', { genres: ['ラーメン'], updatedAt: 2000 })]);
+      setCloudDocs([makeRestaurant('1', { genres: ['和食'], updatedAt: 1000 })]);
+
+      auth.user.set({ uid: 'user-a' });
+      await flush();
+
+      expect(store.restaurants()[0].genres).toEqual(['ラーメン']);
+      expect(setDocMock.mock.calls[0][1]).toMatchObject({ id: '1', genres: ['ラーメン'] });
+    });
+
+    it('updatedAt を持たない旧データはクラウドの更新済みデータに負ける', async () => {
+      await startWithLocal([makeRestaurant('1', { genres: ['和食'] })]);
+      setCloudDocs([makeRestaurant('1', { genres: ['ラーメン'], updatedAt: 1000 })]);
+
+      auth.user.set({ uid: 'user-a' });
+      await flush();
+
+      expect(store.restaurants()[0].genres).toEqual(['ラーメン']);
+    });
+
+    it('更新時刻が同じならローカルを優先する', async () => {
+      await startWithLocal([makeRestaurant('1', { genres: ['和食'], updatedAt: 1000 })]);
+      setCloudDocs([makeRestaurant('1', { genres: ['ラーメン'], updatedAt: 1000 })]);
+
+      auth.user.set({ uid: 'user-a' });
+      await flush();
+
+      expect(store.restaurants()[0].genres).toEqual(['和食']);
+    });
+
+    it('内容はクラウドが新しくても、片方が削除済みなら削除が優先される', async () => {
+      await startWithLocal([makeRestaurant('1', { deleted: true, updatedAt: 1000 })]);
+      setCloudDocs([makeRestaurant('1', { genres: ['ラーメン'], updatedAt: 2000 })]);
+
+      auth.user.set({ uid: 'user-a' });
+      await flush();
+
+      expect(store.restaurants()).toHaveLength(0);
+      expect(store.allRestaurants()[0].deleted).toBe(true);
+    });
+  });
+
+  it('push に失敗した変更は次の変更契機で再送される', async () => {
+    await startWithLocal([makeRestaurant('1'), makeRestaurant('2')]);
+    setCloudDocs([makeRestaurant('1'), makeRestaurant('2')]);
+    auth.user.set({ uid: 'user-a' });
+    await flush();
+
+    // 1件目の更新の push を失敗させる
+    setDocMock.mockClear();
+    setDocMock.mockRejectedValueOnce(new Error('network error'));
+    store.update('1', { genres: ['ラーメン'] });
+    await flush();
+    expect(setDocMock).toHaveBeenCalledTimes(1);
+
+    // 送信前にスナップショットを更新していると、この変更は二度と送られない
+    setDocMock.mockClear();
+    store.update('2', { genres: ['カレー'] });
+    await flush();
+
+    const pushedIds = setDocMock.mock.calls.map((c) => (c[0] as unknown as { id: string }).id);
+    expect(pushedIds.sort()).toEqual(['1', '2']);
+  });
+
+  it('push 失敗は syncError として公開される', async () => {
+    await startWithLocal([makeRestaurant('1')]);
+    setCloudDocs([makeRestaurant('1')]);
+    auth.user.set({ uid: 'user-a' });
+    await flush();
+
+    const sync = TestBed.inject(RestaurantSyncService);
+    expect(sync.syncError()).toBeNull();
+
+    setDocMock.mockRejectedValueOnce(new Error('network error'));
+    store.update('1', { genres: ['ラーメン'] });
+    await flush();
+
+    expect(sync.syncError()).toContain('network error');
+  });
+
+  it('id フィールドを持たないクラウドドキュメントはドキュメント ID で補完される', async () => {
+    await startWithLocal([]);
+
+    // data() に id が無い不正なドキュメント（そのまま使うと doc(..., undefined) で例外）
+    getDocsMock.mockResolvedValue({
+      docs: [{ id: 'doc-9', data: () => ({ name: 'クラウド店', area: '新宿', genres: [], moods: [] }) }],
+    } as never);
+    auth.user.set({ uid: 'user-a' });
+    await flush();
+
+    expect(store.restaurants().map((r) => r.id)).toEqual(['doc-9']);
+  });
+
+  it('同期中に起きたローカル変更も同期後に push される', async () => {
+    await startWithLocal([makeRestaurant('1')]);
+    setCloudDocs([makeRestaurant('1')]);
+
+    // getDocs の解決を遅らせ、その間にローカル変更を起こす（suppressPush が有効な期間）
+    let resolveDocs: (v: unknown) => void = () => undefined;
+    getDocsMock.mockReturnValue(
+      new Promise((resolve) => {
+        resolveDocs = resolve;
+      }) as never,
+    );
+
+    auth.user.set({ uid: 'user-a' });
+    await flush();
+    store.update('1', { genres: ['ラーメン'] });
+    await flush();
+
+    setDocMock.mockClear();
+    resolveDocs({ docs: [{ data: () => makeRestaurant('1') }] });
+    await flush();
+
+    // 同期中の変更が「同期済み」と誤記録されず、回収されて push されること
+    expect(setDocMock.mock.calls.map((c) => (c[0] as unknown as { id: string }).id)).toContain('1');
+  });
 });

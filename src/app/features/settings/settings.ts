@@ -4,7 +4,7 @@
  *       Google ログインによるクラウド同期の状態表示・ログイン/ログアウトを扱う。
  *       version.ts はビルド/開発サーバ起動時に scripts/generate-version.mjs が自動生成する。
  */
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,8 +14,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { APP_VERSION, RELEASE_DATE } from '../../../version';
-import { SettingsStore, ThemePreference } from '@services/settings-store';
+import {
+  MAX_LUNCH_BREAK_MINUTES,
+  SettingsStore,
+  ThemePreference,
+  normalizeLunchBreakMinutes,
+} from '@services/settings-store';
 import { AuthService } from '@core/firebase/auth.service';
+import { RestaurantSyncService } from '@services/restaurant-sync.service';
 
 @Component({
   selector: 'app-settings',
@@ -45,17 +51,29 @@ export class Settings {
   /** 非許可ユーザーのログイン試行時に表示するエラーメッセージ。 */
   protected readonly loginError = this.auth.loginError;
 
+  /** クラウド同期のエラー（正常時は null）。console だけだと同期済みと誤解されるため表示する。 */
+  protected readonly syncError = inject(RestaurantSyncService).syncError;
+
   /** 選択中の表示テーマ。 */
   protected readonly theme = this.settings.theme;
 
-  /** 入力欄の一時的な値（保存ボタンを押すまでは反映しない）。 */
-  protected readonly apiKeyInput = signal(this.settings.googleMapsApiKey());
+  /**
+   * 入力欄の一時的な値（保存ボタンを押すまでは反映しない）。
+   * `linkedSignal` にすることで、他画面などで保存値が変わった場合に入力欄も追従する
+   * （単なる `signal(初期値)` だと構築時の1回しか同期されない）。
+   */
+  protected readonly apiKeyInput = linkedSignal(() => this.settings.googleMapsApiKey());
   /** キーを平文表示するかどうか。 */
   protected readonly showKey = signal(false);
   protected readonly hasSavedKey = this.settings.googleMapsApiKey;
 
-  /** 昼休みの必要時間（分）の入力欄の一時的な値。 */
-  protected readonly lunchBreakMinutesInput = signal(this.settings.lunchBreakMinutes());
+  /** 昼休みの必要時間（分）の入力欄の一時的な値。保存値の変更に追従する。 */
+  protected readonly lunchBreakMinutesInput = linkedSignal(() =>
+    this.settings.lunchBreakMinutes(),
+  );
+
+  /** 入力欄に許可する上限（分）。 */
+  protected readonly maxLunchBreakMinutes = MAX_LUNCH_BREAK_MINUTES;
 
   toggleShowKey(): void {
     this.showKey.update((v) => !v);
@@ -77,9 +95,10 @@ export class Settings {
     this.notify('Google Maps API キーを削除しました');
   }
 
-  /** 昼休みの必要時間（分）を保存する。 */
+  /** 昼休みの必要時間（分）を保存する。空欄（NaN）・範囲外は既定値や上下限へ丸める。 */
   saveLunchBreakMinutes(): void {
-    const minutes = Math.max(0, Math.floor(this.lunchBreakMinutesInput()));
+    const minutes = normalizeLunchBreakMinutes(this.lunchBreakMinutesInput());
+    // 丸めた結果を入力欄へ書き戻し、保存値と表示を一致させる
     this.lunchBreakMinutesInput.set(minutes);
     this.settings.setLunchBreakMinutes(minutes);
     this.notify('昼休みの必要時間を保存しました');

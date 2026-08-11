@@ -6,7 +6,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { OpeningPeriod } from '@shared/models/places';
-import { getRemainingOpenMinutes } from './opening-hours';
+import { ALWAYS_OPEN_REMAINING_MINUTES, getRemainingOpenMinutes } from './opening-hours';
 
 /** OpeningPeriod を簡潔に組み立てるヘルパー。 */
 function period(
@@ -103,9 +103,37 @@ describe('getRemainingOpenMinutes', () => {
     expect(getRemainingOpenMinutes(periods, new Date(2026, AUGUST, MONDAY, 20, 0))).toBe(120);
   });
 
-  it('24時間営業（open === close）は常に営業中扱い', () => {
-    // close <= open のため +1週補正され、週のどの時点でも区間内になる
-    const periods = [period(0, 0, 0, 0, 0, 0)];
-    expect(getRemainingOpenMinutes(periods, new Date(2026, AUGUST, MONDAY, 12, 0))).toBeGreaterThan(0);
+  describe('24時間営業', () => {
+    it('open === close は常に営業中扱い', () => {
+      const periods = [period(0, 0, 0, 0, 0, 0)];
+      expect(getRemainingOpenMinutes(periods, new Date(2026, AUGUST, MONDAY, 12, 0))).toBe(
+        ALWAYS_OPEN_REMAINING_MINUTES,
+      );
+    });
+
+    it('close を持たない区間（Places API の24時間営業表現）も常に営業中扱い', () => {
+      // Places API は24時間営業の店に close を返さない。これを「判定不能(null)」に
+      // すると、最も条件の良い24時間営業店が昼休みフィルタで落ちてしまう。
+      const periods: OpeningPeriod[] = [{ openDay: 0, openHour: 0, openMinute: 0 }];
+      expect(getRemainingOpenMinutes(periods, new Date(2026, AUGUST, MONDAY, 12, 0))).toBe(
+        ALWAYS_OPEN_REMAINING_MINUTES,
+      );
+    });
+
+    it('alwaysOpen フラグ付きの区間も常に営業中扱い', () => {
+      const periods: OpeningPeriod[] = [
+        { openDay: 1, openHour: 9, openMinute: 0, alwaysOpen: true },
+      ];
+      expect(getRemainingOpenMinutes(periods, new Date(2026, AUGUST, MONDAY, 3, 0))).toBe(
+        ALWAYS_OPEN_REMAINING_MINUTES,
+      );
+    });
+
+    it('どんな昼休み時間の要求も満たせるだけの残り分数を返す', () => {
+      const periods: OpeningPeriod[] = [{ openDay: 0, openHour: 0, openMinute: 0 }];
+      const remaining = getRemainingOpenMinutes(periods, new Date(2026, AUGUST, MONDAY, 12, 0));
+      // 設定画面の上限（8時間）を余裕で超えること
+      expect(remaining).toBeGreaterThan(480);
+    });
   });
 });

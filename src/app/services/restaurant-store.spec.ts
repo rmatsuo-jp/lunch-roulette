@@ -51,6 +51,44 @@ describe('RestaurantStore', () => {
       expect(added).toBe(0);
     });
 
+    it('削除済みの店を再取り込みしても重複せず、既存 id が復活する', () => {
+      store.addMany([makeRestaurant({ id: '1', name: 'A店' })]);
+      store.remove('1');
+      expect(store.restaurants()).toHaveLength(0);
+
+      // 表示中の店だけで重複判定していると、ここで id 違いの2レコード目が生まれてしまう
+      const added = store.addMany([makeRestaurant({ id: '2', name: 'A店' })]);
+
+      expect(added).toBe(1);
+      expect(store.restaurants().map((r) => r.id)).toEqual(['1']);
+      expect(store.allRestaurants()).toHaveLength(1);
+    });
+
+    it('復活時は取り込んだ内容を反映しつつ既存 id を維持する', () => {
+      store.addMany([makeRestaurant({ id: '1', name: 'A店', note: '古いメモ' })]);
+      store.remove('1');
+
+      store.addMany([makeRestaurant({ id: '2', name: 'A店', note: '新しいメモ' })]);
+
+      const revived = store.restaurants()[0];
+      expect(revived.id).toBe('1');
+      expect(revived.note).toBe('新しいメモ');
+      expect(revived.deleted).toBe(false);
+    });
+
+    it('同じ削除済みの店が取り込みデータ内に複数あっても1件だけ復活する', () => {
+      store.addMany([makeRestaurant({ id: '1', name: 'A店' })]);
+      store.remove('1');
+
+      const added = store.addMany([
+        makeRestaurant({ id: '2', name: 'A店' }),
+        makeRestaurant({ id: '3', name: 'A店' }),
+      ]);
+
+      expect(added).toBe(1);
+      expect(store.allRestaurants()).toHaveLength(1);
+    });
+
     it('エリアが違えば同名でも別の店として追加する', () => {
       store.addMany([makeRestaurant({ id: '1', name: 'A店', area: '新宿' })]);
       const added = store.addMany([makeRestaurant({ id: '2', name: 'A店', area: '渋谷' })]);
@@ -218,6 +256,27 @@ describe('RestaurantStore', () => {
 
       expect(store.allRestaurants().map((r) => r.id)).toEqual(['2']);
     });
+
+    it('取り込み対象に無い削除済みレコード（tombstone）は残す', () => {
+      store.addMany([makeRestaurant({ id: '1', name: 'A店' })]);
+      store.remove('1');
+
+      // tombstone を捨てると、他端末で削除した店が同期で復活してしまう
+      store.importJson(JSON.stringify([makeRestaurant({ id: '2', name: 'B店' })]));
+
+      expect(store.restaurants().map((r) => r.id)).toEqual(['2']);
+      expect(store.allRestaurants().map((r) => r.id).sort()).toEqual(['1', '2']);
+    });
+
+    it('復元したデータはクラウド側より新しい更新時刻を持つ', () => {
+      const before = Date.now();
+      store.importJson(
+        JSON.stringify([{ ...makeRestaurant({ id: '1', name: 'A店' }), updatedAt: 1000 }]),
+      );
+
+      // 打ち直さないと、古いバックアップがクラウドの内容に上書きされてしまう
+      expect(store.restaurants()[0].updatedAt).toBeGreaterThanOrEqual(before);
+    });
   });
 
   describe('localStorage への永続化', () => {
@@ -235,6 +294,65 @@ describe('RestaurantStore', () => {
       const restored = TestBed.inject(RestaurantStore);
       expect(restored.restaurants().map((r) => r.name)).toEqual(['A店']);
       expect(restored.recentPickedIds()).toEqual(['1']);
+    });
+
+    it('追加・更新・削除で updatedAt が打ち直される（同期の新旧判定に使う）', () => {
+      const before = Date.now();
+      store.addMany([makeRestaurant({ id: '1', name: 'A店' })]);
+      expect(store.restaurants()[0].updatedAt).toBeGreaterThanOrEqual(before);
+
+      const afterAdd = store.restaurants()[0].updatedAt ?? 0;
+      store.update('1', { genres: ['ラーメン'] });
+      expect(store.allRestaurants()[0].updatedAt).toBeGreaterThanOrEqual(afterAdd);
+
+      const afterUpdate = store.allRestaurants()[0].updatedAt ?? 0;
+      store.remove('1');
+      expect(store.allRestaurants()[0].updatedAt).toBeGreaterThanOrEqual(afterUpdate);
+    });
+
+    it('updatedAt を持たない旧データは 0 として読み込む', () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          version: 1,
+          restaurants: [makeRestaurant({ id: '1', name: 'A店' })],
+        }),
+      );
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      const restored = TestBed.inject(RestaurantStore);
+
+      expect(restored.restaurants()[0].updatedAt).toBe(0);
+    });
+
+    it('保存データが壊れていたら空で上書きせず、退避したうえで警告を立てる', () => {
+      localStorage.setItem(STORAGE_KEY, '{"version":1,"restaurants":[壊れたJSON');
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      const restored = TestBed.inject(RestaurantStore);
+
+      expect(restored.storageWarning()).toBeTruthy();
+      // 壊れた生データが退避キーに残っていること（そのまま上書きすると復旧できない）
+      const backupKeys = Object.keys(localStorage).filter((k) =>
+        k.startsWith(`${STORAGE_KEY}.corrupt-`),
+      );
+      expect(backupKeys).toHaveLength(1);
+      expect(localStorage.getItem(backupKeys[0])).toContain('壊れたJSON');
+    });
+
+    it('正常に読み込めた場合は警告を立てない', () => {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version: 1, restaurants: [makeRestaurant({ id: '1', name: 'A店' })] }),
+      );
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      const restored = TestBed.inject(RestaurantStore);
+
+      expect(restored.storageWarning()).toBeNull();
     });
   });
 });

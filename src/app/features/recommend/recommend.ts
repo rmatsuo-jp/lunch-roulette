@@ -15,7 +15,8 @@ import { GoogleMap, MapMarker } from '@angular/google-maps';
 import { Restaurant } from '@shared/models/restaurant';
 import { RestaurantStore } from '@services/restaurant-store';
 import { GoogleMapsLoader } from '@services/google-maps-loader';
-import { RecommendationScorer } from '@services/recommendation-scorer';
+import { LatLng, RecommendationScorer } from '@services/recommendation-scorer';
+import { locationOf } from '@services/places-utils';
 import { FilterChipGroup } from '@shared/ui/filter-chip-group/filter-chip-group';
 import { RestaurantCard } from '@shared/ui/restaurant-card/restaurant-card';
 import { GeolocationService } from './geolocation.service';
@@ -41,6 +42,9 @@ import { RecommendMap } from './recommend-map/recommend-map';
   ],
   templateUrl: './recommend.html',
   styleUrl: './recommend.scss',
+  // フィルタ・並び順は画面固有の UI 状態なので、この画面のライフサイクルに紐付ける
+  // （root スコープだと画面を離れても選択が残り続ける）。
+  providers: [RecommendFilterService, RecommendSortService],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Recommend {
@@ -87,6 +91,8 @@ export class Recommend {
   readonly picked = signal<Restaurant | null>(null);
   /** 選定理由の簡易サマリー（おすすめボタンで選ばれた場合のみ表示）。 */
   readonly pickedReason = signal<string | null>(null);
+  /** 「今日のおすすめ」選定中（現在地の取得待ち）。ボタンの二重押下防止に使う。 */
+  readonly picking = signal(false);
 
   toggle(sig: WritableSignal<string[]>, value: string): void {
     this.filterService.toggle(sig, value);
@@ -129,41 +135,63 @@ export class Recommend {
 
   /**
    * 評価・レビュー件数・現在地からの距離・直近の被り回避を加味して1件を選ぶ。
-   * 現在地が未取得なら「近い順」と同じ流れで取得を試みる（取得できなくてもスコア計算は続行）。
+   * 現在地の取得完了を待ってからスコアリングする（取得できなくても距離抜きで続行）。
+   * 待たずに `currentPos()` を読むと初回は必ず null になり、「近さを考慮した」と
+   * 表示しながら実際には距離が反映されないため。
    */
-  pickRecommended(): void {
+  async pickRecommended(): Promise<void> {
+    if (this.filtered().length === 0) {
+      this.picked.set(null);
+      this.pickedReason.set(null);
+      return;
+    }
+
+    this.picking.set(true);
+    let pos: LatLng | null;
+    try {
+      pos = await this.geolocation.ensureLocation();
+    } finally {
+      this.picking.set(false);
+    }
+
+    // 現在地の取得を待つ間にフィルタが変更されている可能性があるため、ここで取り直す
     const list = this.filtered();
     if (list.length === 0) {
       this.picked.set(null);
       this.pickedReason.set(null);
       return;
     }
-    if (!this.geolocation.currentPos() && !this.geolocation.locating()) {
-      this.geolocation.requestLocation();
-    }
 
-    const pos = this.geolocation.currentPos();
     const recent = this.store.recentPickedIds();
     const globalMeanRating = this.scorer.meanRating(list);
 
-    let best = list[0];
+    // 同点の候補は配列先頭に固定せずランダムに選ぶ。
+    // 単純な最大値だと、候補が少ないときに毎回同じ店が「おすすめ」になってしまう。
     let bestScore = -Infinity;
+    let tied: Restaurant[] = [];
     for (const r of list) {
       const score = this.scorer.scoreOf(r, pos, recent, globalMeanRating, this.sortService.distanceOf(r));
       if (score > bestScore) {
         bestScore = score;
-        best = r;
+        tied = [r];
+      } else if (score === bestScore) {
+        tied.push(r);
       }
     }
+    const best = tied[Math.floor(Math.random() * tied.length)] ?? list[0];
 
     this.picked.set(best);
     this.pickedReason.set(this.scorer.reasonFor(best, pos, this.sortService.distanceOf(best)));
     this.store.recordPicked(best.id);
   }
 
-  /** おすすめカードの地図中心座標（マーカーと同じ位置）。 */
-  mapCenter(r: Restaurant): google.maps.LatLngLiteral {
-    return { lat: r.places?.lat ?? 0, lng: r.places?.lng ?? 0 };
+  /**
+   * おすすめカードの地図中心座標（マーカーと同じ位置）。
+   * 有効な座標が無ければ null を返し、テンプレート側で地図自体を描画しない
+   * （0 で埋めると取得失敗の店が (0,0) に表示されてしまうため）。
+   */
+  mapCenter(r: Restaurant): google.maps.LatLngLiteral | null {
+    return locationOf(r);
   }
 
   /** 一覧マップのマーカーをクリックした店を「今日はここ！」として表示する。 */

@@ -100,6 +100,7 @@
         matInput
         type="number"
         min="0"
+        [max]="maxLunchBreakMinutes"
         [ngModel]="lunchBreakMinutesInput()"
         (ngModelChange)="lunchBreakMinutesInput.set($event)"
       />
@@ -144,6 +145,9 @@
           <p class="account-email muted">{{ u.email }}</p>
         </div>
       </div>
+      @if (syncError()) {
+        <p class="muted status error-text">{{ syncError() }}</p>
+      }
       <button mat-stroked-button color="warn" (click)="logout()">
         <mat-icon>logout</mat-icon>
         ログアウト

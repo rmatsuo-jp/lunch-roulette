@@ -145,4 +145,54 @@ describe('CsvImport', () => {
       expect(result.map((r) => r.area)).toEqual(['新宿', '新宿', '渋谷']);
     });
   });
+
+  describe('パース警告', () => {
+    it('正常な CSV では警告が出ない', () => {
+      const result = csv.parseTextDetailed(['Title,Note,URL', 'A店,,'].join('\n'), '新宿');
+
+      expect(result.warnings).toEqual([]);
+      expect(result.restaurants).toHaveLength(1);
+    });
+
+    it('列数が合わない行は警告として報告される', () => {
+      // 列ズレを黙って捨てると「N件取り込みました」と表示され、欠落に気付けない
+      const result = csv.parseTextDetailed(
+        ['Title,Note,URL', 'A店,メモ,https://example.com,余計な列'].join('\n'),
+        '新宿',
+      );
+
+      expect(result.warnings.length).toBeGreaterThan(0);
+    });
+
+    it('警告が多すぎる場合は先頭数件＋残件数にまとめる', () => {
+      const rows = Array.from({ length: 10 }, (_, i) => `店${i},メモ,url,余計な列`);
+      const result = csv.parseTextDetailed(['Title,Note,URL', ...rows].join('\n'), '新宿');
+
+      expect(result.warnings.length).toBeLessThanOrEqual(4);
+      expect(result.warnings.at(-1)).toContain('ほか');
+    });
+
+    it('ファイル単位の警告にはファイル名が付く', async () => {
+      const file = new File(['Title,Note,URL\nA店,メモ,url,余計な列'], '新宿.csv', {
+        type: 'text/csv',
+      });
+      const result = await csv.parseFileDetailed(file);
+
+      expect(result.warnings[0]).toContain('新宿.csv');
+    });
+  });
+
+  describe('ヘッダー行の検出', () => {
+    it('クォート内にカンマを含む説明行をヘッダーと誤認しない', () => {
+      const text = [
+        '"このリストは、恵比寿のランチ候補です"',
+        'Title,Note,URL',
+        'A店,,',
+      ].join('\n');
+
+      const result = csv.parseText(text, '恵比寿');
+
+      expect(result.map((r) => r.name)).toEqual(['A店']);
+    });
+  });
 });

@@ -19,20 +19,21 @@ Google Mapの保存リスト（CSV）取込→ジャンル・気分タグ絞込�
 - UI文言・コメントは日本語。
 
 ## アーキテクチャ
-- `services/restaurant-store.ts` — localStorage永続化の単一ソース。`restaurants`をsignal保持、`effect`で自動保存。エリア/ジャンル/気分一覧をcomputed公開（フィルタUI用）。追加（重複排除）/更新/削除/JSON入出力。
-- `services/csv-import.ts` — Google Takeout保存リストCSV（`Title, Note, URL`）をpapaparseで`Restaurant[]`へ変換。エリアはファイル名由来。ジャンルは取込時未設定（空配列）、手動タグ付けまたはPlaces API取得時の自動反映（`places-genre-map.ts`）で付与（店名正規表現推定は廃止済）。
-- `models/restaurant.ts` — `Restaurant`/`RestaurantData`型。
+- `services/restaurant-store.ts` — localStorage永続化の単一ソース。`restaurants`をsignal保持、`effect`で自動保存。エリア/ジャンル/気分一覧をcomputed公開（フィルタUI用）。追加（重複排除・tombstone復活）/更新/削除/JSON入出力。変更操作はすべて`updatedAt`を打ち直す（同期の新旧判定に使うため）。保存失敗・データ破損は`storageWarning` signalで通知。
+- `services/csv-import.ts` — Google Takeout保存リストCSV（`Title, Note, URL`）をpapaparseで`Restaurant[]`へ変換。エリアはファイル名由来。`parseTextDetailed`/`parseFilesDetailed`はパース警告も返す（列ズレを黙って捨てないため）。ジャンルは取込時未設定（空配列）、手動タグ付けまたはPlaces API取得時の自動反映（`places-genre-map.ts`）で付与（店名正規表現推定は廃止済）。
+- `models/restaurant.ts` — `Restaurant`/`RestaurantData`型。`updatedAt`（epochミリ秒）はクラウド同期の競合解決に使う。未設定＝0扱い。
 - `models/places.ts` — Places API取得の`PlacesInfo`型。
 - `models/tags.ts` — `GENRE_OPTIONS`/`MOOD_OPTIONS`（ジャンル・気分タグ選択肢の単一ソース）。UIと`places-genre-map.ts`の両方から参照。
 - `services/places-enrichment.ts` — Places API v1（`searchText`）で座標/評価/営業時間等取得。店ごと1回のみ呼出（キャッシュ`Restaurant.places`）。
 - `services/places-genre-map.ts` — Places公式ジャンル（`types`）→日本語ジャンルタグ変換。`pages/data/`で手動タグと和集合統合。
 - `services/google-maps-loader.ts` — Google Maps JS APIスクリプト動的読込。
-- `services/opening-hours.ts` — `getRemainingOpenMinutes()`。日またぎ営業にも対応した「残り営業時間（分）」算出の純粋関数。`recommend/`の余裕時間フィルタで使用。
+- `services/opening-hours.ts` — `getRemainingOpenMinutes()`。日またぎ営業・24時間営業（Places APIが`close`を返さない区間＝`alwaysOpen`）にも対応した「残り営業時間（分）」算出の純粋関数。`recommend/`の余裕時間フィルタで使用。
+- `services/places-utils.ts` — `hasValidLocation()`/`locationOf()`。Places取得失敗レコード（`lat:0,lng:0,fetchError`）を「座標あり」と誤判定しないための共有判定。地図表示・距離計算はすべてここを経由する。
 - `services/settings-store.ts` — `googleMapsApiKey`（設定画面入力値）・テーマ・昼休み時間をlocalStorage永続化。`environment.ts`値より優先。
 - `core/firebase/firebase.init.ts` — Firebase App/Auth/Firestoreの初期化。
 - `core/firebase/auth.service.ts` — `AuthService`。Googleポップアップログイン、`auth.constants.ts`のメールアドレスホワイトリストでログイン可否判定。
-- `services/restaurant-sync.service.ts` — `RestaurantSyncService`。ログイン済みの場合のみ動作するFirestore双方向同期（id単位マージ、以後`effect()`で自動push）。未ログイン時は一切通信しない。
-- `pages/recommend/` — タグ絞込ランチ提案（トップページ）。地図表示、現在地距離順/評価順ソート、評価・レビュー件数・距離・直近被り回避を加味したスコアリングで1件選出（`RestaurantStore.recentPickedIds`で被り回避）。
+- `services/restaurant-sync.service.ts` — `RestaurantSyncService`。ログイン済みの場合のみ動作するFirestore双方向同期。id単位マージで、内容は`updatedAt`が新しい側を採用（同時刻はローカル優先）、削除は片方でも削除なら削除（tombstone伝播）。以後`effect()`で差分のみ自動push。同期済みスナップショットは**書き込み成功後**に更新する（失敗分を再送するため）。エラーは`syncError` signalで設定画面に表示。未ログイン時は一切通信しない。
+- `pages/recommend/` — タグ絞込ランチ提案（トップページ）。地図表示、現在地距離順/評価順ソート、評価・レビュー件数・距離・直近被り回避を加味したスコアリングで1件選出（`RestaurantStore.recentPickedIds`で被り回避、同点はランダム）。フィルタ/ソート状態（`RecommendFilterService`/`RecommendSortService`）は**コンポーネントスコープ**で提供する（画面固有のUI状態のため）。
 - `pages/data/` — CSV取込&タグ付け・データ管理・Places情報取得ボタン。
 - `pages/settings/` — バージョン情報＋Google Maps APIキー入力/保存、テーマ・昼休み時間設定、Googleログイン/ログアウト。
 - `pages/dev/` — 開発時のみの診断画面（ストア件数・生JSON・環境情報等）。`environment.production`により本番ルートから除外。
@@ -42,6 +43,8 @@ Google Mapの保存リスト（CSV）取込→ジャンル・気分タグ絞込�
 
 ## コマンド
 `npm start` 開発サーバ / `npm run build` 本番ビルド / `npm test` テスト。
+
+`check:whitelist`（`prebuild`/`pretest`で自動実行）が`auth.constants.ts`と`firestore.rules`の許可メール一覧の一致を検証する。片方だけ編集するとビルドが落ちるので、必ず両方を更新すること。
 
 ## バージョン運用
 - **Conventional Commits + semantic-release**で自動採番。`package.json`の`version`は手動編集禁止。

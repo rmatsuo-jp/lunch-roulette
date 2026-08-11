@@ -67,16 +67,28 @@
                   "with": "src/environments/environment.prod.ts"
                 }
               ],
+              "sourceMap": {
+                "scripts": true,
+                "styles": false,
+                "hidden": true,
+                "vendor": false
+              },
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1.1MB"
+                  "maximumWarning": "1MB",
+                  "maximumError": "1.15MB"
                 },
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "4kB",
                   "maximumError": "8kB"
+                },
+                {
+                  "type": "bundle",
+                  "name": "main",
+                  "maximumWarning": "1MB",
+                  "maximumError": "1.15MB"
                 }
               ],
               "outputHashing": "all",

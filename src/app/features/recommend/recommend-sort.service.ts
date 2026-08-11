@@ -12,7 +12,8 @@ import { RecommendFilterService } from './recommend-filter.service';
 
 export type SortMode = 'random' | 'near' | 'rating';
 
-@Injectable({ providedIn: 'root' })
+/** 並び順も画面固有の UI 状態のため、`RecommendFilterService` と同じくコンポーネントスコープで提供する。 */
+@Injectable()
 export class RecommendSortService {
   private readonly scorer = inject(RecommendationScorer);
   private readonly geolocation = inject(GeolocationService);

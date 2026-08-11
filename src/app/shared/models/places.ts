@@ -1,13 +1,19 @@
-/** 営業時間の1区間（開店〜閉店）。深夜跨ぎの場合 closeDay が openDay と異なることがある。 */
+/**
+ * 営業時間の1区間（開店〜閉店）。深夜跨ぎの場合 closeDay が openDay と異なることがある。
+ * 24時間営業の店は Places API が close を返さないため、閉店側のフィールドを持たない
+ * （= `alwaysOpen` が true）区間として表現する。
+ */
 export interface OpeningPeriod {
   /** 開店曜日（0=日曜〜6=土曜） */
   openDay: number;
   openHour: number;
   openMinute: number;
-  /** 閉店曜日（0=日曜〜6=土曜） */
-  closeDay: number;
-  closeHour: number;
-  closeMinute: number;
+  /** 閉店曜日（0=日曜〜6=土曜）。24時間営業の場合は未設定。 */
+  closeDay?: number;
+  closeHour?: number;
+  closeMinute?: number;
+  /** 24時間営業（閉店時刻を持たない）ことを示すフラグ。 */
+  alwaysOpen?: boolean;
 }
 
 /** Google Places API (v1) から取得した店舗情報のキャッシュ。 */

@@ -36,3 +36,8 @@
   background: var(--mat-sys-primary-container);
   color: var(--mat-sys-on-primary-container);
 }
+
+.storage-warning {
+  border-color: var(--mat-sys-error);
+  color: var(--mat-sys-error);
+}
