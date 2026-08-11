@@ -1,11 +1,8 @@
 /**
- * @file src/version.ts を自動生成するスクリプト。
+ * @file リリース時に src/version.ts を自動生成するスクリプト。
  *       package.json の version を読み取り、実行当日（JST）をリリース日として埋め込む。
- *       呼び出し元は2系統:
- *       1. semantic-release の prepareCmd（.releaserc.json）— リリース時の正式なバージョン埋め込み。
- *       2. package.json の prestart / prebuild / prewatch / pretest — 開発時。
- *          src/version.ts は .gitignore 済み（git追跡外）でクローン直後は存在せず、
- *          未生成だと settings.ts の import が解決できずビルドが落ちるため毎回生成する。
+ *       semantic-release の prepareCmd（.releaserc.json）から呼ばれる。
+ *       通常の npm start / npm run build では実行されない（毎回差分が出るのを防ぐため）。
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

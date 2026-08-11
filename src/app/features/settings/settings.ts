@@ -1,8 +1,7 @@
 /**
- * @file 設定ページ。アプリのバージョン名・リリース日、
- *       Google Maps API キーの入力・保存（localStorage）、および
- *       Google ログインによるクラウド同期の状態表示・ログイン/ログアウトを扱う。
- *       version.ts はビルド/開発サーバ起動時に scripts/generate-version.mjs が自動生成する。
+ * @file 設定ページ。Google Maps API キーの入力・保存（localStorage）、表示テーマ・昼休み時間、
+ *       および Google ログインによるクラウド同期の状態表示・ログイン/ログアウトを扱う。
+ *       バージョン情報とリリースノートの表示は `ReleaseNotesPanel` に切り出している。
  */
 import { ChangeDetectionStrategy, Component, inject, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -13,7 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { APP_VERSION, RELEASE_DATE } from '../../../version';
+import { ReleaseNotesPanel } from './release-notes-panel/release-notes-panel';
 import {
   MAX_LUNCH_BREAK_MINUTES,
   SettingsStore,
@@ -33,6 +32,7 @@ import { RestaurantSyncService } from '@services/restaurant-sync.service';
     MatInputModule,
     MatButtonModule,
     MatButtonToggleModule,
+    ReleaseNotesPanel,
   ],
   templateUrl: './settings.html',
   styleUrl: './settings.scss',
@@ -42,9 +42,6 @@ export class Settings {
   private settings = inject(SettingsStore);
   private snackBar = inject(MatSnackBar);
   private auth = inject(AuthService);
-
-  protected readonly version = APP_VERSION;
-  protected readonly releaseDate = RELEASE_DATE;
 
   /** ログイン中の Google ユーザー（未ログインなら null）。 */
   protected readonly user = this.auth.user;
@@ -68,9 +65,7 @@ export class Settings {
   protected readonly hasSavedKey = this.settings.googleMapsApiKey;
 
   /** 昼休みの必要時間（分）の入力欄の一時的な値。保存値の変更に追従する。 */
-  protected readonly lunchBreakMinutesInput = linkedSignal(() =>
-    this.settings.lunchBreakMinutes(),
-  );
+  protected readonly lunchBreakMinutesInput = linkedSignal(() => this.settings.lunchBreakMinutes());
 
   /** 入力欄に許可する上限（分）。 */
   protected readonly maxLunchBreakMinutes = MAX_LUNCH_BREAK_MINUTES;

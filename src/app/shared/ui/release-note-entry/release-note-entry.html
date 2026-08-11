@@ -1,0 +1,29 @@
+<!-- @file リリースノート1バージョン分。見出し（バージョン・日付）＋新機能一覧＋不具合修正の折りたたみ。 -->
+<h3 class="release-note-title">
+  v{{ entry().version }}<span class="release-note-date">（{{ entry().date }}）</span>
+</h3>
+
+@if (entry().features.length) {
+  <ul class="release-note-list">
+    @for (f of entry().features; track f) {
+      <li>{{ f }}</li>
+    }
+  </ul>
+}
+
+@if (entry().fixes.length) {
+  <mat-expansion-panel class="release-note-fixes">
+    <mat-expansion-panel-header>
+      <mat-panel-title>不具合修正</mat-panel-title>
+    </mat-expansion-panel-header>
+    <ul class="release-note-list">
+      @for (f of entry().fixes; track f) {
+        <li>{{ f }}</li>
+      }
+    </ul>
+  </mat-expansion-panel>
+}
+
+@if (!entry().features.length && !entry().fixes.length) {
+  <p class="muted">このバージョンに記載された変更はありません。</p>
+}

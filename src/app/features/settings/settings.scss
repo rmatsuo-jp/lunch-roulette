@@ -1,4 +1,5 @@
-/* @file 設定ページのスタイル。表示テーマ・APIキー設定・バージョン情報カードの見た目を整える。
+/* @file 設定ページのスタイル。表示テーマ・APIキー設定・クラウド同期カードの見た目を整える
+   （バージョン情報カードのスタイルは release-notes-panel/ 側にある）。
    カードの幅・余白・見出しは styles.scss の .page-section / .section-title に統一済み。 */
 .theme-toggle-group {
   width: 100%;
@@ -59,4 +60,3 @@
 .account-email {
   margin: 0;
 }
-

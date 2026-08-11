@@ -1,0 +1,35 @@
+<!-- @file バージョン情報カード。version.ts はリリース時に自動生成。直下に過去のリリースノート一覧への開閉導線。 -->
+<mat-card class="page-section version-card" appearance="outlined">
+  <mat-card-content>
+    <h2 class="section-title">
+      <mat-icon>info</mat-icon>
+      バージョン情報
+    </h2>
+    <dl class="definition-list">
+      <dt>バージョン</dt>
+      <dd>{{ version }}</dd>
+      <dt>リリース日</dt>
+      <dd>{{ releaseDate }}</dd>
+    </dl>
+
+    <button mat-button (click)="toggleAllNotes()">
+      {{ showAllNotes() ? 'リリースノートを閉じる' : 'リリースノートを見る' }}
+    </button>
+
+    @if (showAllNotes()) {
+      @if (allNotes(); as notes) {
+        @if (notes.length) {
+          <div class="release-notes-list">
+            @for (entry of notes; track entry.version) {
+              <app-release-note-entry [entry]="entry" />
+            }
+          </div>
+        } @else {
+          <p class="muted">リリースノートを取得できませんでした。</p>
+        }
+      } @else {
+        <p class="muted">読み込み中…</p>
+      }
+    }
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,10 @@
+<!-- @file 新機能モーダル。未読バージョン分のリリースノートを新しい順に並べる。 -->
+<h2 mat-dialog-title>新機能のお知らせ</h2>
+<mat-dialog-content>
+  @for (entry of entries; track entry.version) {
+    <app-release-note-entry [entry]="entry" />
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-flat-button mat-dialog-close>閉じる</button>
+</mat-dialog-actions>

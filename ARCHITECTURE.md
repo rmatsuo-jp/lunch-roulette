@@ -268,7 +268,7 @@ flowchart TD
 |---|---|
 | `recommend/` | エリア/ジャンル/気分トグル絞込（軸内OR・軸間AND）、残り営業時間フィルタ、`sortMode`(random/near/rating)、`RecommendationScorer`による「今日のおすすめ」1件選出＋地図表示＋`recordPicked()` |
 | `data/` | CSV取り込み、店舗ごとのタグ編集、エリア別グルーピング表示、Places情報の個別/一括取得（200ms間隔で逐次）、JSONエクスポート/インポート |
-| `settings/` | Google Maps APIキー入力・保存・マスク表示、テーマ切替、昼休み時間設定、Googleログイン/ログアウト、`APP_VERSION`/`RELEASE_DATE`表示 |
+| `settings/` | Google Maps APIキー入力・保存・マスク表示、テーマ切替、昼休み時間設定、Googleログイン/ログアウト、`release-notes-panel/`による`APP_VERSION`/`RELEASE_DATE`表示＋リリースノート一覧の開閉 |
 | `dev/`（開発時のみ） | ストア件数（全体/有効/削除済み/エリア別/ジャンル別/気分別）、生JSON、設定・環境情報（APIキーはマスク）、認証状態、直近ピックJSONの表示・コピー |
 
 ## 4. 技術スタックと非機能要件
@@ -299,6 +299,12 @@ flowchart LR
 コミット種別→バージョン: `fix:`/`perf:`→PATCH、`feat:`→MINOR、`feat!:`/`BREAKING CHANGE:`→MAJOR、
 `docs:`/`chore:`/`refactor:`/`style:`/`test:`/`ci:`→上昇なし。
 `src/version.ts` はリリース時のみ `scripts/generate-version.mjs` が生成（`npm start`/`build` では再生成しない）。
+`.gitignore` には載っているが `.releaserc.json` の `assets` に含まれるため git 追跡済みで、クローン直後もビルドできる。
+
+semantic-release が生成する `CHANGELOG.md` は `angular.json` の assets でビルド成果物直下へコピーされ、
+`ReleaseNotesService`（`core/release-notes/`）が実行時に fetch してリリースノート表示に使う。
+未読バージョンがあればアプリシェル（`app.ts`）が新機能モーダルを開き、閉じた時点で既読を localStorage に記録する。
+モーダルと `MatDialog` は動的 import（初回ロードの main バンドルに載せないため）。
 
 ## 6. 今後の方針判断のための指針
 
