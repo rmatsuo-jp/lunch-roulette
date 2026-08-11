@@ -1,6 +1,15 @@
 import { Injectable } from '@angular/core';
 import Papa from 'papaparse';
-import { Restaurant } from '../models/restaurant';
+import { Restaurant } from '@shared/models/restaurant';
+
+/** 取り込み結果。`warnings` はパースで問題があった行の説明（空なら正常）。 */
+export interface CsvImportResult {
+  restaurants: Restaurant[];
+  warnings: string[];
+}
+
+/** 警告として表示する最大件数（壊れた CSV で大量に出るのを防ぐ）。 */
+const MAX_REPORTED_WARNINGS = 3;
 
 /** 店名列として認識する候補キー（ヘッダー行の判定・値の抽出の両方で使う）。 */
 const NAME_COLUMN_KEYS = ['title', 'name', 'タイトル', '名前', '店名'];
@@ -15,22 +24,49 @@ const NAME_COLUMN_KEYS = ['title', 'name', 'タイトル', '名前', '店名'];
  */
 @Injectable({ providedIn: 'root' })
 export class CsvImport {
-  /** 複数ファイルをまとめて取り込む。 */
+  /** 複数ファイルをまとめて取り込む（警告は破棄）。 */
   async parseFiles(files: FileList | File[]): Promise<Restaurant[]> {
-    const list = Array.from(files);
-    const results = await Promise.all(list.map((f) => this.parseFile(f)));
-    return results.flat();
+    return (await this.parseFilesDetailed(files)).restaurants;
   }
 
-  /** 1ファイルを取り込む。 */
+  /** 複数ファイルをまとめて取り込み、パース警告も返す。 */
+  async parseFilesDetailed(files: FileList | File[]): Promise<CsvImportResult> {
+    const list = Array.from(files);
+    const results = await Promise.all(list.map((f) => this.parseFileDetailed(f)));
+    return {
+      restaurants: results.flatMap((r) => r.restaurants),
+      warnings: results.flatMap((r) => r.warnings),
+    };
+  }
+
+  /** 1ファイルを取り込む（警告は破棄）。 */
   async parseFile(file: File): Promise<Restaurant[]> {
+    return (await this.parseFileDetailed(file)).restaurants;
+  }
+
+  /** 1ファイルを取り込み、パース警告も返す。 */
+  async parseFileDetailed(file: File): Promise<CsvImportResult> {
     const area = this.areaFromFileName(file.name);
     const text = await file.text();
-    return this.parseText(text, area);
+    const result = this.parseTextDetailed(text, area);
+    // どのファイルの警告か分かるようファイル名を添える
+    return {
+      restaurants: result.restaurants,
+      warnings: result.warnings.map((w) => `${file.name}: ${w}`),
+    };
   }
 
-  /** CSV テキストを指定エリアの Restaurant[] へ変換する。 */
+  /** CSV テキストを指定エリアの Restaurant[] へ変換する（警告は破棄）。 */
   parseText(text: string, area: string): Restaurant[] {
+    return this.parseTextDetailed(text, area).restaurants;
+  }
+
+  /**
+   * CSV テキストを指定エリアの Restaurant[] へ変換し、パース警告も返す。
+   * papaparse の `errors` を無視すると、列がずれた壊れた CSV でも
+   * 「N件を取り込みました」と成功表示され、欠落に気付けないため。
+   */
+  parseTextDetailed(text: string, area: string): CsvImportResult {
     // 説明文や空行が先頭にある CSV にも対応するため、本当のヘッダー行から解析を始める。
     const body = this.sliceFromHeader(text);
     const parsed = Papa.parse<Record<string, string>>(body, {
@@ -39,6 +75,7 @@ export class CsvImport {
       transformHeader: (h) => h.trim().toLowerCase(),
     });
 
+    const warnings = this.describeParseErrors(parsed.errors ?? []);
     const rows = parsed.data ?? [];
     const out: Restaurant[] = [];
     for (const row of rows) {
@@ -54,7 +91,22 @@ export class CsvImport {
         moods: [],
       });
     }
-    return out;
+    return { restaurants: out, warnings };
+  }
+
+  /**
+   * papaparse のエラーをユーザー向けの説明に変換する。
+   * 件数が多いと通知に収まらないため先頭数件に絞り、残りは件数だけ伝える。
+   */
+  private describeParseErrors(errors: Papa.ParseError[]): string[] {
+    if (errors.length === 0) return [];
+    const head = errors.slice(0, MAX_REPORTED_WARNINGS).map((e) => {
+      // row は 0 始まり。ヘッダー行を含む見た目の行番号に合わせる。
+      const line = typeof e.row === 'number' ? `${e.row + 2}行目` : '不明な行';
+      return `${line}: ${e.message}`;
+    });
+    const rest = errors.length - head.length;
+    return rest > 0 ? [...head, `ほか ${rest} 件の問題があります`] : head;
   }
 
   /**
@@ -67,7 +119,11 @@ export class CsvImport {
     // 既知の列名のいずれかを含む最初の行をヘッダーとみなす（店名列 + url列）。
     const headerKeys = [...NAME_COLUMN_KEYS, 'url'];
     const idx = lines.findIndex((line) => {
-      const cells = line.toLowerCase().split(',').map((c) => c.trim());
+      // 素朴なカンマ分割だと `"店名, 住所"` のようなクォート内カンマを誤って分割するため、
+      // 1行だけ papaparse に通して正しくセルへ分解する。
+      const cells = (Papa.parse<string[]>(line).data[0] ?? []).map((c) =>
+        c.trim().toLowerCase(),
+      );
       return cells.some((c) => headerKeys.includes(c));
     });
     // 見つからなければ元テキストをそのまま返す（従来動作を維持）。

@@ -72,10 +72,10 @@ interface Restaurant {
 
 本アプリは **MIT License** のもとで無償提供されます。利用にあたっては、以下の規約類をご確認ください。
 
-- [免責事項（DISCLAIMER）](docs/DISCLAIMER.md)
-- [利用規約（TERMS）](docs/TERMS.md)
-- [プライバシーポリシー（PRIVACY）](docs/PRIVACY.md)
-- [ライセンス（LICENSE）](docs/LICENSE.md)
+- [免責事項（DISCLAIMER）](docs/legal/disclaimer.md)
+- [利用規約（TERMS）](docs/legal/terms.md)
+- [プライバシーポリシー（PRIVACY）](docs/legal/privacy.md)
+- [ライセンス（LICENSE）](docs/legal/LICENSE.md)
 - [脆弱性報告について（SECURITY）](SECURITY.md)
 
 本アプリは現状有姿で提供され、利用に起因する損害について、法令上許容される範囲で開発者は責任を負いません。

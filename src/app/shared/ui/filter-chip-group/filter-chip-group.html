@@ -1,0 +1,13 @@
+<div class="filter-group">
+  <h3>{{ label() }}</h3>
+  @if (options().length === 0 && emptyMessage()) {
+    <span class="muted">{{ emptyMessage() }}</span>
+  }
+  <mat-chip-set>
+    @for (opt of options(); track opt) {
+      <mat-chip class="chip" [highlighted]="isSelected(opt)" (click)="toggle.emit(opt)">
+        {{ opt }}
+      </mat-chip>
+    }
+  </mat-chip-set>
+</div>

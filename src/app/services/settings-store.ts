@@ -4,7 +4,7 @@
  * PlacesEnrichment / GoogleMapsLoader / App コンポーネントから参照される。
  */
 import { Injectable, computed, effect, signal } from '@angular/core';
-import { readJson, writeJson } from '../core/storage';
+import { readJson, writeJson } from '@core/storage';
 
 const STORAGE_KEY = 'lunch-roulette.settings.v1';
 
@@ -13,6 +13,18 @@ export type ThemePreference = 'light' | 'dark' | 'system';
 
 /** 「昼休みに余裕がある店のみ」判定に使う必要時間（分）のデフォルト値。 */
 const DEFAULT_LUNCH_BREAK_MINUTES = 60;
+/** 昼休み時間として許容する上限（分）。8時間。 */
+export const MAX_LUNCH_BREAK_MINUTES = 480;
+
+/**
+ * 昼休み分数を安全な値に丸める。
+ * 空欄の入力欄からは NaN が渡ってくるが、これを保存すると `remaining < NaN` が常に false になり、
+ * 営業時間フィルタが黙って無効化されてしまうため、不正値は既定値へフォールバックする。
+ */
+export function normalizeLunchBreakMinutes(minutes: number): number {
+  if (!Number.isFinite(minutes)) return DEFAULT_LUNCH_BREAK_MINUTES;
+  return Math.min(MAX_LUNCH_BREAK_MINUTES, Math.max(0, Math.floor(minutes)));
+}
 
 interface SettingsData {
   version: 3;
@@ -54,9 +66,10 @@ export class SettingsStore {
     this.data.update((current) => ({ ...current, theme }));
   }
 
-  /** 昼休みに最低限必要な分数を保存する。 */
+  /** 昼休みに最低限必要な分数を保存する（不正値は既定値・範囲内へ丸める）。 */
   setLunchBreakMinutes(minutes: number): void {
-    this.data.update((current) => ({ ...current, lunchBreakMinutes: minutes }));
+    const normalized = normalizeLunchBreakMinutes(minutes);
+    this.data.update((current) => ({ ...current, lunchBreakMinutes: normalized }));
   }
 
   private load(): SettingsData {
@@ -71,7 +84,10 @@ export class SettingsStore {
       version: 3,
       googleMapsApiKey: parsed.googleMapsApiKey ?? '',
       theme: parsed.theme ?? 'system',
-      lunchBreakMinutes: parsed.lunchBreakMinutes ?? DEFAULT_LUNCH_BREAK_MINUTES,
+      // 過去に不正値が保存されていた場合もここで是正する
+      lunchBreakMinutes: normalizeLunchBreakMinutes(
+        parsed.lunchBreakMinutes ?? DEFAULT_LUNCH_BREAK_MINUTES,
+      ),
     };
   }
 

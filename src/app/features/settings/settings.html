@@ -1,0 +1,180 @@
+<!-- @file 設定ページテンプレート。表示テーマ・Google Maps APIキー設定・クラウド同期・バージョン情報カードを表示する。 -->
+<mat-card class="page-section theme-card" appearance="outlined">
+  <mat-card-content>
+    <h2 class="section-title">
+      <mat-icon>dark_mode</mat-icon>
+      表示テーマ
+    </h2>
+    <mat-button-toggle-group
+      class="theme-toggle-group wrap-toggle-labels"
+      [value]="theme()"
+      (change)="setTheme($event.value)"
+    >
+      <mat-button-toggle value="light">
+        <mat-icon>light_mode</mat-icon>
+        ライト
+      </mat-button-toggle>
+      <mat-button-toggle value="dark">
+        <mat-icon>dark_mode</mat-icon>
+        ダーク
+      </mat-button-toggle>
+      <mat-button-toggle value="system">
+        <mat-icon>brightness_auto</mat-icon>
+        システムに従う
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+  </mat-card-content>
+</mat-card>
+
+<mat-card class="page-section api-key-card" appearance="outlined">
+  <mat-card-content>
+    <h2 class="section-title">
+      <mat-icon>vpn_key</mat-icon>
+      Google Maps API キー
+    </h2>
+    <p class="muted">
+      地図情報の取得（ジャンル・評価・営業時間・地図表示）に使う API キーを登録します。
+      Google Cloud Console で <strong>Places API (New)</strong> と
+      <strong>Maps JavaScript API</strong> を有効化し、HTTP リファラー制限をかけたキーを
+      発行してから入力してください。キーはこの端末の localStorage にのみ保存されます。
+    </p>
+
+    <mat-form-field appearance="outline" class="api-key-field">
+      <mat-label>API キー</mat-label>
+      <input
+        matInput
+        [type]="showKey() ? 'text' : 'password'"
+        [ngModel]="apiKeyInput()"
+        (ngModelChange)="apiKeyInput.set($event)"
+        autocomplete="off"
+        placeholder="AIza..."
+      />
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        (click)="toggleShowKey()"
+        [attr.aria-label]="showKey() ? 'キーを隠す' : 'キーを表示'"
+      >
+        <mat-icon>{{ showKey() ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+    </mat-form-field>
+
+    <div class="api-key-actions">
+      <button mat-flat-button color="primary" (click)="save()">
+        <mat-icon>save</mat-icon>
+        保存
+      </button>
+      @if (hasSavedKey()) {
+        <button mat-stroked-button color="warn" (click)="clear()">
+          <mat-icon>delete</mat-icon>
+          削除
+        </button>
+      }
+    </div>
+
+    <p class="muted status">
+      @if (hasSavedKey()) {
+        現在キーが登録されています。
+      } @else {
+        現在キーは未登録です（地図情報の取得・地図表示は利用できません）。
+      }
+    </p>
+  </mat-card-content>
+</mat-card>
+
+<mat-card class="page-section lunch-break-card" appearance="outlined">
+  <mat-card-content>
+    <h2 class="section-title">
+      <mat-icon>schedule</mat-icon>
+      昼休みの必要時間
+    </h2>
+    <p class="muted">
+      「今日のおすすめ」画面の「昼休みに余裕がある店のみ」フィルタで使う、
+      食事に最低限必要な時間（分）です。残りの営業時間がこれより短い店は除外されます。
+    </p>
+
+    <mat-form-field appearance="outline" class="lunch-break-field">
+      <mat-label>必要時間（分）</mat-label>
+      <input
+        matInput
+        type="number"
+        min="0"
+        [max]="maxLunchBreakMinutes"
+        [ngModel]="lunchBreakMinutesInput()"
+        (ngModelChange)="lunchBreakMinutesInput.set($event)"
+      />
+    </mat-form-field>
+
+    <div class="lunch-break-actions">
+      <button mat-flat-button color="primary" (click)="saveLunchBreakMinutes()">
+        <mat-icon>save</mat-icon>
+        保存
+      </button>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<mat-card class="page-section sync-card" appearance="outlined">
+  <mat-card-content>
+    <h2 class="section-title">
+      <mat-icon>cloud_sync</mat-icon>
+      クラウド同期
+    </h2>
+    <p class="muted">
+      Google でログインすると、お店データ（登録・タグ編集・削除）を複数端末間で同期できます。
+      未ログインでもローカル保存のまま全機能を利用できます。
+    </p>
+
+    @if (user(); as u) {
+      <div class="account-row">
+        @if (u.photoURL) {
+          <img
+            class="account-avatar"
+            [src]="u.photoURL"
+            [alt]="u.displayName || u.email || 'アカウント'"
+            referrerpolicy="no-referrer"
+          />
+        } @else {
+          <mat-icon class="account-avatar-fallback">account_circle</mat-icon>
+        }
+        <div class="account-info">
+          @if (u.displayName) {
+            <p class="account-name">{{ u.displayName }}</p>
+          }
+          <p class="account-email muted">{{ u.email }}</p>
+        </div>
+      </div>
+      @if (syncError()) {
+        <p class="muted status error-text">{{ syncError() }}</p>
+      }
+      <button mat-stroked-button color="warn" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        ログアウト
+      </button>
+    } @else {
+      <button mat-flat-button color="primary" (click)="login()">
+        <mat-icon>login</mat-icon>
+        Google でログイン
+      </button>
+      @if (loginError()) {
+        <p class="muted status error-text">{{ loginError() }}</p>
+      }
+    }
+  </mat-card-content>
+</mat-card>
+
+<mat-card class="page-section version-card" appearance="outlined">
+  <mat-card-content>
+    <h2 class="section-title">
+      <mat-icon>info</mat-icon>
+      バージョン情報
+    </h2>
+    <dl class="definition-list">
+      <dt>バージョン</dt>
+      <dd>{{ version }}</dd>
+      <dt>リリース日</dt>
+      <dd>{{ releaseDate }}</dd>
+    </dl>
+  </mat-card-content>
+</mat-card>

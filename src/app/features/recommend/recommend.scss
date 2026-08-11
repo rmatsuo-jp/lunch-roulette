@@ -1,0 +1,155 @@
+:host {
+  display: block;
+}
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.chip {
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 20px;
+}
+
+.empty {
+  text-align: center;
+  margin-top: 32px;
+
+  mat-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 24px;
+  }
+
+  .empty-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: var(--mat-sys-primary);
+  }
+}
+
+.sort-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -8px 0 20px;
+
+  mat-button-toggle-group {
+    max-width: 100%;
+  }
+}
+
+.places-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 4px 0 12px;
+}
+
+.places-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+google-map {
+  display: block;
+  margin: 8px 0 16px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.list-map-section {
+  margin-bottom: 24px;
+}
+
+.pick-card {
+  margin-bottom: 24px;
+  border-color: var(--mat-sys-primary);
+  border-width: 2px;
+}
+
+.pick-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--mat-sys-primary);
+  font-weight: 700;
+}
+
+.pick-name {
+  margin: 8px 0;
+}
+
+.pick-reason {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0 0 8px;
+}
+
+.list-heading {
+  margin: 16px 0 8px;
+  font-size: 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.item-name {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.area-tag,
+.tag {
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+}
+
+.area-tag {
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+}
+
+.tag.mood {
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+}
+
+.note {
+  margin: 6px 0;
+  white-space: pre-wrap;
+}
+
+.map-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.85rem;
+}

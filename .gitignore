@@ -42,3 +42,10 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Local secrets (念のため。現状APIキー等は環境変数ファイルではなく設定画面から入力する運用)
+.env
+.env.*
+*.local.ts
+
+src/version.ts

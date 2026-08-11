@@ -1,0 +1,43 @@
+:host {
+  display: block;
+}
+
+// .intro の幅・余白・見出しは styles.scss の .page-section / .section-title に統一済み
+.import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.count {
+  margin: 8px 0 0;
+  font-weight: 600;
+}
+
+.center {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.area-group {
+  margin-bottom: 20px;
+}
+
+.area-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1rem;
+  margin: 12px 0 8px;
+}
+
+.count-badge {
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+}
+
+.storage-warning {
+  border-color: var(--mat-sys-error);
+  color: var(--mat-sys-error);
+}

@@ -1,0 +1,172 @@
+@if (total() === 0) {
+  <mat-card class="empty page-section">
+    <mat-card-content>
+      <mat-icon class="empty-icon">restaurant_menu</mat-icon>
+      <p>まだお店が登録されていません。</p>
+      <p class="muted">
+        Google Map のリストを Takeout で書き出した CSV を取り込みましょう。
+      </p>
+      <a mat-flat-button color="primary" routerLink="/data">
+        <mat-icon>upload_file</mat-icon>
+        取り込み画面へ
+      </a>
+    </mat-card-content>
+  </mat-card>
+} @else {
+  <div class="page-section">
+  <section class="filters">
+    <app-filter-chip-group
+      label="エリア"
+      [options]="areas()"
+      [selected]="filterService.selectedAreas()"
+      emptyMessage="（エリアなし）"
+      (toggle)="toggle(filterService.selectedAreas, $event)"
+    />
+    <app-filter-chip-group
+      label="ジャンル"
+      [options]="genres()"
+      [selected]="filterService.selectedGenres()"
+      emptyMessage="（未タグ。取り込み画面でジャンルを付けられます）"
+      (toggle)="toggle(filterService.selectedGenres, $event)"
+    />
+    <app-filter-chip-group
+      label="気分・その他"
+      [options]="moods()"
+      [selected]="filterService.selectedMoods()"
+      emptyMessage="（未タグ）"
+      (toggle)="toggle(filterService.selectedMoods, $event)"
+    />
+  </section>
+
+  <div class="filter-group">
+    <mat-chip-set>
+      <mat-chip
+        class="chip"
+        [highlighted]="filterService.requireLunchTime()"
+        (click)="toggleRequireLunchTime()"
+      >
+        <mat-icon inline>schedule</mat-icon>
+        昼休みに余裕がある店のみ
+      </mat-chip>
+    </mat-chip-set>
+  </div>
+
+  <div class="actions">
+    <button mat-flat-button color="primary" (click)="pickRandom()" [disabled]="filtered().length === 0">
+      <mat-icon>casino</mat-icon>
+      ランダムで決めて（{{ filtered().length }}件から）
+    </button>
+    <button
+      mat-flat-button
+      color="accent"
+      (click)="pickRecommended()"
+      [disabled]="filtered().length === 0 || picking()"
+    >
+      <mat-icon>auto_awesome</mat-icon>
+      @if (picking()) { 現在地を確認中… } @else { 今日のおすすめ }
+    </button>
+    @if (hasFilter()) {
+      <button mat-stroked-button (click)="clearFilters()">
+        <mat-icon>clear</mat-icon>
+        条件クリア
+      </button>
+    }
+  </div>
+
+  <div class="sort-row">
+    <span class="muted">並び順:</span>
+    <mat-button-toggle-group
+      class="wrap-toggle-labels"
+      [value]="sortService.sortMode()"
+      (change)="setSortMode($event.value)"
+    >
+      <mat-button-toggle value="random">通常</mat-button-toggle>
+      <mat-button-toggle value="near">近い順</mat-button-toggle>
+      <mat-button-toggle value="rating">評価順</mat-button-toggle>
+    </mat-button-toggle-group>
+    @if (geolocation.locating()) { <span class="muted">現在地取得中…</span> }
+    @if (geolocation.locationDenied() && sortService.sortMode() === 'near') {
+      <span class="muted">現在地を取得できませんでした（許可・対応状況をご確認ください）</span>
+    }
+  </div>
+
+  @if (mapsReady() && mappable().length > 0) {
+    <section class="list-map-section">
+      <h3 class="list-heading">
+        地図で見る（{{ mappable().length }}/{{ filtered().length }}件）
+      </h3>
+      <app-recommend-map
+        [restaurants]="mappable()"
+        [center]="defaultCenter"
+        (markerClick)="onMarkerClick($event)"
+      />
+    </section>
+  } @else if (mapsReady() && filtered().length > 0) {
+    <p class="muted">地図表示できる店舗がありません（Places情報未取得）。取り込み画面から取得してください。</p>
+  } @else if (mapsError(); as mapsErr) {
+    <p class="muted">
+      <mat-icon inline>error_outline</mat-icon>
+      地図を表示できません: {{ mapsErr }}
+      （<a routerLink="/settings">設定画面</a>で API キーを確認してください）
+    </p>
+  }
+
+  @if (picked(); as p) {
+    <mat-card class="pick-card" appearance="outlined">
+      <mat-card-content>
+        <div class="pick-label">
+          <mat-icon>star</mat-icon> 今日はここ！
+        </div>
+        <h2 class="pick-name">{{ p.name }}</h2>
+        @if (pickedReason(); as reason) {
+          <p class="pick-reason"><mat-icon inline>auto_awesome</mat-icon> {{ reason }}</p>
+        }
+        <div class="tags">
+          <span class="area-tag chip-pill">{{ p.area }}</span>
+          @for (g of p.genres; track g) { <span class="tag chip-pill">{{ g }}</span> }
+          @for (m of p.moods; track m) { <span class="tag mood chip-pill">{{ m }}</span> }
+        </div>
+        @if (p.note) { <p class="note muted">{{ p.note }}</p> }
+
+        @if (p.places && !p.places.fetchError) {
+          <div class="places-detail">
+            @if (p.places.rating) {
+              <span class="places-chip muted"><mat-icon inline>star</mat-icon> {{ p.places.rating }}（{{ p.places.userRatingsTotal }}件）</span>
+            }
+            @if (p.places.openingHoursText?.length) {
+              <span class="places-chip muted"><mat-icon inline>schedule</mat-icon> {{ p.places.openingHoursText![0] }}</span>
+            }
+          </div>
+          @if (mapsReady() && mapCenter(p); as center) {
+            <google-map height="220px" width="100%" [center]="center" [zoom]="16">
+              <map-marker [position]="center" [title]="p.name" />
+            </google-map>
+          }
+        } @else {
+          <p class="muted">
+            地図情報が未取得です。
+            <a routerLink="/data">取り込み画面</a>
+            から取得できます。
+          </p>
+        }
+
+        @if (p.url) {
+          <a mat-stroked-button [href]="p.url" target="_blank" rel="noopener">
+            <mat-icon>map</mat-icon> Google Map で開く
+          </a>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <h3 class="list-heading">該当するお店（{{ sorted().length }}件）</h3>
+  @if (sorted().length === 0) {
+    <p class="muted">条件に合うお店がありません。条件をゆるめてみてください。</p>
+  }
+  <div class="grid">
+    @for (r of sorted(); track r.id) {
+      <app-restaurant-card [restaurant]="r" />
+    }
+  </div>
+  </div>
+}

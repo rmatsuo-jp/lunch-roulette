@@ -1,0 +1,80 @@
+@if (storageWarning(); as warning) {
+  <mat-card class="page-section storage-warning" appearance="outlined">
+    <mat-card-content>
+      <p><mat-icon inline>warning</mat-icon> {{ warning }}</p>
+    </mat-card-content>
+  </mat-card>
+}
+
+<mat-card class="page-section intro" appearance="outlined">
+  <mat-card-content>
+    <h2 class="section-title">
+      <mat-icon>upload_file</mat-icon>
+      データの取り込み
+    </h2>
+    <p class="muted">
+      Google Map のリストを
+      <a href="https://takeout.google.com/" target="_blank" rel="noopener">Google Takeout</a>
+      → 「保存済み(Saved)」で書き出すと、リストごとに CSV が得られます。
+      その CSV を選ぶと、<strong>ファイル名がエリア名</strong>として取り込まれます。
+    </p>
+
+    <div class="import-actions">
+      <button mat-flat-button color="primary" (click)="csvInput.click()" [disabled]="importing()">
+        <mat-icon>upload_file</mat-icon>
+        CSV を取り込む
+      </button>
+      <input #csvInput type="file" accept=".csv" multiple hidden (change)="onCsvSelected($event)" />
+
+      <button mat-stroked-button (click)="addSampleData()" [disabled]="importing()">
+        <mat-icon>add_circle</mat-icon>
+        サンプルデータを追加
+      </button>
+
+      <button mat-stroked-button (click)="exportJson()" [disabled]="total() === 0">
+        <mat-icon>download</mat-icon>
+        JSON 書き出し
+      </button>
+
+      <button mat-stroked-button (click)="jsonInput.click()">
+        <mat-icon>restore</mat-icon>
+        JSON 読み込み
+      </button>
+      <input #jsonInput type="file" accept=".json" hidden (change)="onJsonSelected($event)" />
+
+      @if (total() > 0) {
+        <button mat-stroked-button color="warn" (click)="clearAll()">
+          <mat-icon>delete_sweep</mat-icon>
+          全削除
+        </button>
+      }
+    </div>
+    <p class="muted count">登録数: {{ total() }} 件</p>
+  </mat-card-content>
+</mat-card>
+
+@if (total() === 0) {
+  <p class="muted center">
+    まだお店がありません。上のボタンから CSV を取り込んでください。
+  </p>
+}
+
+@for (group of groups(); track group.area) {
+  <section class="area-group">
+    <h3 class="area-heading">
+      <mat-icon>place</mat-icon> {{ group.area }}
+      <span class="count-badge chip-pill">{{ group.items.length }}</span>
+    </h3>
+
+    @for (r of group.items; track r.id) {
+      <app-restaurant-tag-editor
+        [restaurant]="r"
+        [enriching]="enriching().has(r.id)"
+        (genresChange)="setGenres(r, $event)"
+        (moodsChange)="setMoods(r, $event)"
+        (removeRequested)="remove(r)"
+        (enrichRequested)="enrichOne(r)"
+      />
+    }
+  </section>
+}
