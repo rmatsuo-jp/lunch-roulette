@@ -91,7 +91,9 @@ describe('CsvImport', () => {
     });
 
     it('値の前後の空白は除去される', () => {
-      const text = ['Title,Note,URL', '  寿司六郎  ,  夜のみ  ,  https://maps.example/6  '].join('\n');
+      const text = ['Title,Note,URL', '  寿司六郎  ,  夜のみ  ,  https://maps.example/6  '].join(
+        '\n',
+      );
       const result = csv.parseText(text, '築地');
 
       expect(result[0]).toMatchObject({
@@ -184,11 +186,7 @@ describe('CsvImport', () => {
 
   describe('ヘッダー行の検出', () => {
     it('クォート内にカンマを含む説明行をヘッダーと誤認しない', () => {
-      const text = [
-        '"このリストは、恵比寿のランチ候補です"',
-        'Title,Note,URL',
-        'A店,,',
-      ].join('\n');
+      const text = ['"このリストは、恵比寿のランチ候補です"', 'Title,Note,URL', 'A店,,'].join('\n');
 
       const result = csv.parseText(text, '恵比寿');
 

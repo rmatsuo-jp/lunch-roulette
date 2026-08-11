@@ -17,7 +17,14 @@ function makeRestaurant(id: string, places?: Partial<PlacesInfo>): Restaurant {
     genres: [],
     moods: [],
     places: places
-      ? { placeId: `p-${id}`, lat: 0, lng: 0, types: [], fetchedAt: '2026-01-01T00:00:00.000Z', ...places }
+      ? {
+          placeId: `p-${id}`,
+          lat: 0,
+          lng: 0,
+          types: [],
+          fetchedAt: '2026-01-01T00:00:00.000Z',
+          ...places,
+        }
       : undefined,
   };
 }
@@ -124,9 +131,9 @@ describe('RecommendationScorer', () => {
     });
 
     it('座標が (0, 0) なら未取得扱いで Infinity', () => {
-      expect(scorer.distance({ lat: 35.0, lng: 139.0 }, makeRestaurant('a', { lat: 0, lng: 0 }))).toBe(
-        Infinity,
-      );
+      expect(
+        scorer.distance({ lat: 35.0, lng: 139.0 }, makeRestaurant('a', { lat: 0, lng: 0 })),
+      ).toBe(Infinity);
     });
 
     it('同一座標なら 0km', () => {
@@ -170,7 +177,9 @@ describe('RecommendationScorer', () => {
 
     it('評価と距離が両方あれば「・」で連結する', () => {
       const r = makeRestaurant('a', { lat: 35.0, lng: 139.0, rating: 4.2, userRatingsTotal: 120 });
-      expect(scorer.reasonFor(r, { lat: 35.0, lng: 139.0 }, 0.5)).toBe('評価 4.2（120件）・現在地から500m');
+      expect(scorer.reasonFor(r, { lat: 35.0, lng: 139.0 }, 0.5)).toBe(
+        '評価 4.2（120件）・現在地から500m',
+      );
     });
 
     it('情報が何も無ければ既定文言を返す', () => {

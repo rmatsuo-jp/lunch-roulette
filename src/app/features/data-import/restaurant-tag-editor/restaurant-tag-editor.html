@@ -4,7 +4,13 @@
       <div class="row-name">
         {{ restaurant().name }}
         @if (restaurant().url) {
-          <a class="map-link" [href]="restaurant().url" target="_blank" rel="noopener" title="Google Map で開く">
+          <a
+            class="map-link"
+            [href]="restaurant().url"
+            target="_blank"
+            rel="noopener"
+            title="Google Map で開く"
+          >
             <mat-icon>map</mat-icon>
           </a>
         }
@@ -13,14 +19,19 @@
         <mat-icon>delete</mat-icon>
       </button>
     </div>
-    @if (restaurant().note) { <p class="note muted">{{ restaurant().note }}</p> }
+    @if (restaurant().note) {
+      <p class="note muted">{{ restaurant().note }}</p>
+    }
 
     <div class="places-info">
       @if (restaurant().places && !restaurant().places?.fetchError) {
         <span class="places-chip muted">
           <mat-icon inline>place</mat-icon>
-          @if (restaurant().places?.rating) { {{ restaurant().places?.rating }}★ ({{ restaurant().places?.userRatingsTotal }}件) }
-          @else { 座標取得済み }
+          @if (restaurant().places?.rating) {
+            {{ restaurant().places?.rating }}★ ({{ restaurant().places?.userRatingsTotal }}件)
+          } @else {
+            座標取得済み
+          }
         </span>
         <button mat-button (click)="enrichRequested.emit()" [disabled]="enriching()">
           <mat-icon>refresh</mat-icon> 再取得
@@ -80,7 +91,11 @@
     <div class="tag-fields">
       <mat-form-field appearance="outline" class="tag-field" subscriptSizing="dynamic">
         <mat-label>ジャンル</mat-label>
-        <mat-select multiple [value]="restaurant().genres" (selectionChange)="onGenresChange($event)">
+        <mat-select
+          multiple
+          [value]="restaurant().genres"
+          (selectionChange)="onGenresChange($event)"
+        >
           @for (opt of genreOptions; track opt) {
             <mat-option [value]="opt">{{ opt }}</mat-option>
           }

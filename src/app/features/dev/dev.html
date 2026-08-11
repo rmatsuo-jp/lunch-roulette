@@ -63,7 +63,9 @@
       ログイン・同期状態
     </h2>
     @if (user(); as u) {
-      <p><mat-icon inline>account_circle</mat-icon> {{ u.email }}（UID: {{ u.uid }}）としてログイン中</p>
+      <p>
+        <mat-icon inline>account_circle</mat-icon> {{ u.email }}（UID: {{ u.uid }}）としてログイン中
+      </p>
     } @else {
       <p class="muted">未ログイン</p>
     }

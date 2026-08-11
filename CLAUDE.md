@@ -3,13 +3,16 @@
 リポジトリ作業指針。アプリ名: **ランチくじ（Lunch Roulette）**
 
 ## 概要
+
 Google Mapの保存リスト（CSV）取込→ジャンル・気分タグ絞込→「今日のランチ」提案。データは既定でローカル完結、店舗情報正確化のみGoogle Places API使用。外部API・生成AIはAPIキー保護/コスト管理を担保できる場合のみ許可。自動通信なし、ユーザー操作契機のみ。クラウド同期（Firestore）はホワイトリスト登録済みアカウントがGoogleログインした場合のみ動作するオプトイン機能。
 
 ## エージェント向け基本ルール
+
 - **会話言語**: 返答・説明・質問はすべて**日本語**。
 - **学習目的の教授ルール**: コード変更依頼時、実装だけでなく「なぜそのファイルをどう変更するとその挙動になるか」を日本語で解説。ユーザーがAngularを自力修正できる水準を目指す。実装と解説は必ずセット。
 
 ## 規約
+
 - **Angular 22 / standalone / signals / `inject()`**。NgModule不使用。
 - ファイル名は`.component`等サフィックス無し（`feature.ts/html/scss`）。
 - 各ファイル冒頭に日本語`@file`/JSDoc。
@@ -19,6 +22,7 @@ Google Mapの保存リスト（CSV）取込→ジャンル・気分タグ絞込�
 - UI文言・コメントは日本語。
 
 ## アーキテクチャ
+
 - `services/restaurant-store.ts` — localStorage永続化の単一ソース。`restaurants`をsignal保持、`effect`で自動保存。エリア/ジャンル/気分一覧をcomputed公開（フィルタUI用）。追加（重複排除・tombstone復活）/更新/削除/JSON入出力。変更操作はすべて`updatedAt`を打ち直す（同期の新旧判定に使うため）。保存失敗・データ破損は`storageWarning` signalで通知。
 - `services/csv-import.ts` — Google Takeout保存リストCSV（`Title, Note, URL`）をpapaparseで`Restaurant[]`へ変換。エリアはファイル名由来。`parseTextDetailed`/`parseFilesDetailed`はパース警告も返す（列ズレを黙って捨てないため）。ジャンルは取込時未設定（空配列）、手動タグ付けまたはPlaces API取得時の自動反映（`places-genre-map.ts`）で付与（店名正規表現推定は廃止済）。
 - `models/restaurant.ts` — `Restaurant`/`RestaurantData`型。`updatedAt`（epochミリ秒）はクラウド同期の競合解決に使う。未設定＝0扱い。
@@ -43,11 +47,15 @@ Google Mapの保存リスト（CSV）取込→ジャンル・気分タグ絞込�
 詳細なデータフロー・依存関係図は[ARCHITECTURE.md](ARCHITECTURE.md)を参照。
 
 ## コマンド
-`npm start` 開発サーバ / `npm run build` 本番ビルド / `npm test` テスト。
+
+`npm start` 開発サーバ / `npm run build` 本番ビルド / `npm test` テスト / `npm run lint` ESLint。
+
+整形は Prettier（`npx prettier --write .`）。CIは`npx prettier --check .`で検証するため、コミット前に整形すること。ESLint設定は`eslint.config.js`（angular-eslint、`app`プレフィックス強制、テンプレートa11yの一部は一時無効）。
 
 `check:whitelist`（`prebuild`/`pretest`で自動実行）が`auth.constants.ts`と`firestore.rules`の許可メール一覧の一致を検証する。片方だけ編集するとビルドが落ちるので、必ず両方を更新すること。
 
 ## バージョン運用
+
 - **Conventional Commits + semantic-release**で自動採番。`package.json`の`version`は手動編集禁止。
 - mainへのpushでGitHub Actionsが次バージョン判定、タグ/GitHub Release/`CHANGELOG.md`生成。
   - `fix:`/`perf:`→PATCH、`feat:`→MINOR、`feat!:`/`BREAKING CHANGE:`→MAJOR。`docs:` `chore:` `refactor:` `style:` `test:` `ci:`は上昇なし。
@@ -55,8 +63,20 @@ Google Mapの保存リスト（CSV）取込→ジャンル・気分タグ絞込�
 - リリースノートは`CHANGELOG.md`が正典。`angular.json`のassetsでビルド成果物直下へ配信し、`core/release-notes/`が実行時にfetchして表示する（UI用に文言を二重管理しない）。
 - 設定（`.releaserc.json`）は3プロジェクト共通。
 
+## CI/CD（eibun-labと共通形式）
+
+- `ci.yml` — main向けPRで Prettier check → ESLint → `ng test --coverage`。カバレッジ閾値は`angular.json`の`test.options.coverageThresholds`（statements85/branches78/functions82/lines85）。
+- `codeql.yml` — main push/PR＋週次でCodeQL静的解析。
+- `dependabot.yml` / `dependabot-auto-merge.yml` — 週次で npm・github-actions をグループ更新。major以外はauto-merge（TypeScriptのmajorは除外）。
+- `deploy.yml` — mainへのpushで Test → **Build(verify)** → semantic-release → Firestoreルール → 再Build → GitHub Pages。
+  - Build(verify)をリリース前に置くのは、タグ・バージョン確定が不可逆なため。
+  - semantic-releaseが`src/version.ts`を書き換えるので、成果物用にもう一度ビルドする。
+  - checkoutは`ref: main`＋`git reset --hard origin/main`で、concurrency待機中に進んだmainへ追随する。
+
 ## 開発サーバーのポート
+
 既定ポートは`angular.json`の`architect.serve.options.port`で**4202**固定（study-english=4200/career-roadmap=4201と分離、3システム同時起動可能にするため）。
 
 ## 技術識別子の命名
+
 `package.json`/`angular.json`のプロジェクト名、localStorageキー、Firestore名前空間`apps/lunch_roulette`、GitHubリポジトリ名は`lunch-roulette`/`lunch_roulette`に統一済み（開発中のため既存データ互換性は考慮不要と判断し移行処理なしでリネーム）。

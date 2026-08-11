@@ -191,7 +191,9 @@
     padding-bottom: 16px;
     margin-left: 220px;
     width: calc(100% - 220px);
-    transition: margin-left 0.2s ease, width 0.2s ease;
+    transition:
+      margin-left 0.2s ease,
+      width 0.2s ease;
 
     > * {
       max-width: 900px;

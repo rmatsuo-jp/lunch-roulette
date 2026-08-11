@@ -57,7 +57,12 @@ describe('SettingsStore', () => {
   it('保存済みの不正値は読み込み時に是正される', () => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ version: 3, googleMapsApiKey: '', theme: 'system', lunchBreakMinutes: null }),
+      JSON.stringify({
+        version: 3,
+        googleMapsApiKey: '',
+        theme: 'system',
+        lunchBreakMinutes: null,
+      }),
     );
 
     TestBed.resetTestingModule();

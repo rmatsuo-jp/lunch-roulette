@@ -117,10 +117,9 @@ describe('RestaurantSyncService', () => {
     await flush();
 
     expect(getDocsMock).toHaveBeenCalledTimes(1);
-    expect(setDocMock.mock.calls.map((c) => (c[0] as unknown as { id: string }).id).sort()).toEqual([
-      '1',
-      '2',
-    ]);
+    expect(setDocMock.mock.calls.map((c) => (c[0] as unknown as { id: string }).id).sort()).toEqual(
+      ['1', '2'],
+    );
   });
 
   it('同期直後に変更が無ければ push 対象は0件', async () => {
@@ -176,7 +175,10 @@ describe('RestaurantSyncService', () => {
     await startWithLocal([makeRestaurant('1'), makeRestaurant('2')]);
 
     // user-a: クラウドに既に同じ内容がある想定 → 初回同期では push されない
-    setCloudDocs([makeRestaurant('1', { deleted: false }), makeRestaurant('2', { deleted: false })]);
+    setCloudDocs([
+      makeRestaurant('1', { deleted: false }),
+      makeRestaurant('2', { deleted: false }),
+    ]);
     auth.user.set({ uid: 'user-a' });
     await flush();
     expect(setDocMock).not.toHaveBeenCalled();
@@ -187,10 +189,9 @@ describe('RestaurantSyncService', () => {
     auth.user.set({ uid: 'user-b' });
     await flush();
 
-    expect(setDocMock.mock.calls.map((c) => (c[0] as unknown as { id: string }).id).sort()).toEqual([
-      '1',
-      '2',
-    ]);
+    expect(setDocMock.mock.calls.map((c) => (c[0] as unknown as { id: string }).id).sort()).toEqual(
+      ['1', '2'],
+    );
   });
 
   it('クラウド側の削除フラグはローカルへマージされる（deleted の OR）', async () => {
@@ -211,7 +212,12 @@ describe('RestaurantSyncService', () => {
     auth.user.set({ uid: 'user-a' });
     await flush();
 
-    expect(store.restaurants().map((r) => r.id).sort()).toEqual(['1', '9']);
+    expect(
+      store
+        .restaurants()
+        .map((r) => r.id)
+        .sort(),
+    ).toEqual(['1', '9']);
   });
 
   describe('updatedAt による内容マージ', () => {
@@ -313,7 +319,9 @@ describe('RestaurantSyncService', () => {
 
     // data() に id が無い不正なドキュメント（そのまま使うと doc(..., undefined) で例外）
     getDocsMock.mockResolvedValue({
-      docs: [{ id: 'doc-9', data: () => ({ name: 'クラウド店', area: '新宿', genres: [], moods: [] }) }],
+      docs: [
+        { id: 'doc-9', data: () => ({ name: 'クラウド店', area: '新宿', genres: [], moods: [] }) },
+      ],
     } as never);
     auth.user.set({ uid: 'user-a' });
     await flush();

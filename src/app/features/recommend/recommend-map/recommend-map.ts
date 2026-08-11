@@ -3,7 +3,15 @@
  * マーカー一覧が変化するたびに `fitBounds()` で表示範囲を自動調整する。
  * Google Maps JS API 自体の読み込み管理は `GoogleMapsLoader`（親コンポーネント側）が担う。
  */
-import { ChangeDetectionStrategy, Component, computed, effect, input, output, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
 import { GoogleMap, MapMarker } from '@angular/google-maps';
 import { Restaurant } from '@shared/models/restaurant';
 import { locationOf } from '@services/places-utils';

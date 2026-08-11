@@ -15,8 +15,8 @@
     <p class="muted">
       Google Map のリストを
       <a href="https://takeout.google.com/" target="_blank" rel="noopener">Google Takeout</a>
-      → 「保存済み(Saved)」で書き出すと、リストごとに CSV が得られます。
-      その CSV を選ぶと、<strong>ファイル名がエリア名</strong>として取り込まれます。
+      → 「保存済み(Saved)」で書き出すと、リストごとに CSV が得られます。 その CSV
+      を選ぶと、<strong>ファイル名がエリア名</strong>として取り込まれます。
     </p>
 
     <div class="import-actions">
@@ -54,9 +54,7 @@
 </mat-card>
 
 @if (total() === 0) {
-  <p class="muted center">
-    まだお店がありません。上のボタンから CSV を取り込んでください。
-  </p>
+  <p class="muted center">まだお店がありません。上のボタンから CSV を取り込んでください。</p>
 }
 
 @for (group of groups(); track group.area) {

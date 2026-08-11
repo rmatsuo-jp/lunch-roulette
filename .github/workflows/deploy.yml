@@ -6,6 +6,13 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  pages: write
+  id-token: write
+
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -13,25 +20,38 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
+          # push イベント既定のトリガーSHAではなく main の先端を取得する
+          # （concurrency の待ち行列で滞留する間に main が進むと、古いSHAではリリースがスキップされるため）
+          ref: main
           # semantic-release は全コミット履歴とタグを参照して次バージョンを判定するため全取得する
           fetch-depth: 0
           persist-credentials: true
 
-      - uses: actions/setup-node@v5
+      # checkout 解決後に main が進んでいた場合に備え、先端とタグへ明示的に追随する
+      # （追随分もこの後の Test / Build (verify) を通ってからリリースされる）
+      - name: Sync to latest main
+        run: |
+          git fetch origin main --tags
+          git reset --hard origin/main
+
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Test
+        run: npx ng test --watch=false
+
+      # ビルドが壊れている場合はここで止め、以降のリリース（タグ・バージョン確定）を作成しない
+      - name: Build (verify)
+        run: npm run build -- --base-href=/lunch-roulette/
 
       # コミット種別から次バージョンを判定 → package.json / src/version.ts / CHANGELOG.md を更新し
       # タグ・GitHub Release を作成して main へ push([skip ci] 付きで再帰起動しない)
@@ -45,6 +65,7 @@ jobs:
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
+      # semantic-release が src/version.ts を最新バージョンへ更新したため、成果物用に再ビルドする
       - name: Build
         run: npm run build -- --base-href=/lunch-roulette/
 
@@ -52,19 +73,16 @@ jobs:
         run: cp dist/lunch-roulette/browser/index.html dist/lunch-roulette/browser/404.html
 
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./dist/lunch-roulette/browser
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -72,4 +90,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

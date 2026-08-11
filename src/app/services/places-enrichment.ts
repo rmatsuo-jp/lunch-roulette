@@ -39,7 +39,7 @@ interface ApiTimePoint {
 }
 
 interface SearchTextResponse {
-  places?: Array<{
+  places?: {
     id: string;
     location?: { latitude: number; longitude: number };
     types?: string[];
@@ -49,9 +49,9 @@ interface SearchTextResponse {
     formattedAddress?: string;
     regularOpeningHours?: {
       weekdayDescriptions?: string[];
-      periods?: Array<{ open: ApiTimePoint; close?: ApiTimePoint }>;
+      periods?: { open: ApiTimePoint; close?: ApiTimePoint }[];
     };
-  }>;
+  }[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -146,7 +146,7 @@ export class PlacesEnrichment {
    * 「判定不能」として除外されてしまう）。
    */
   private parsePeriods(
-    periods?: Array<{ open: ApiTimePoint; close?: ApiTimePoint }>,
+    periods?: { open: ApiTimePoint; close?: ApiTimePoint }[],
   ): OpeningPeriod[] | undefined {
     if (!periods) return undefined;
     return periods.map((p) => {
@@ -183,7 +183,8 @@ export class PlacesEnrichment {
         case 429:
           return 'API の利用上限に達しました。しばらく待ってから再試行してください';
         default:
-          if (e.status >= 500) return 'Google 側で一時的なエラーが発生しました。時間をおいて再試行してください';
+          if (e.status >= 500)
+            return 'Google 側で一時的なエラーが発生しました。時間をおいて再試行してください';
           return `通信エラーが発生しました（HTTP ${e.status}）`;
       }
     }
@@ -197,7 +198,7 @@ export class PlacesEnrichment {
 
   // ── 同時実行数の制限 ───────────────────────────────────────────────
   private activeRequests = 0;
-  private readonly waiting: Array<() => void> = [];
+  private readonly waiting: (() => void)[] = [];
 
   /** 空きがあれば即座にスロットを確保する。確保できたら true。 */
   private tryAcquireSlot(): boolean {

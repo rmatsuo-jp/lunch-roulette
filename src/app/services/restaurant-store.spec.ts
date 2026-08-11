@@ -46,7 +46,9 @@ describe('RestaurantStore', () => {
 
     it('重複判定は大文字小文字・前後空白を無視する', () => {
       store.addMany([makeRestaurant({ id: '1', name: 'Ramen', area: 'Shinjuku' })]);
-      const added = store.addMany([makeRestaurant({ id: '2', name: '  ramen  ', area: ' SHINJUKU ' })]);
+      const added = store.addMany([
+        makeRestaurant({ id: '2', name: '  ramen  ', area: ' SHINJUKU ' }),
+      ]);
 
       expect(added).toBe(0);
     });
@@ -184,8 +186,20 @@ describe('RestaurantStore', () => {
   describe('派生 signal（エリア / ジャンル / 気分）', () => {
     it('重複を除き日本語順にソートし、削除済みは含めない', () => {
       store.addMany([
-        makeRestaurant({ id: '1', name: 'A店', area: '新宿', genres: ['ラーメン'], moods: ['がっつり'] }),
-        makeRestaurant({ id: '2', name: 'B店', area: '渋谷', genres: ['ラーメン', 'カレー'], moods: [] }),
+        makeRestaurant({
+          id: '1',
+          name: 'A店',
+          area: '新宿',
+          genres: ['ラーメン'],
+          moods: ['がっつり'],
+        }),
+        makeRestaurant({
+          id: '2',
+          name: 'B店',
+          area: '渋谷',
+          genres: ['ラーメン', 'カレー'],
+          moods: [],
+        }),
       ]);
 
       expect(store.areas()).toEqual(['渋谷', '新宿'].sort((a, b) => a.localeCompare(b, 'ja')));
@@ -247,7 +261,9 @@ describe('RestaurantStore', () => {
     });
 
     it('配列でない形式は例外を投げる', () => {
-      expect(() => store.importJson(JSON.stringify({ version: 1 }))).toThrowError('不正な JSON 形式です');
+      expect(() => store.importJson(JSON.stringify({ version: 1 }))).toThrowError(
+        '不正な JSON 形式です',
+      );
     });
 
     it('取り込みは既存データを置き換える', () => {
@@ -265,7 +281,12 @@ describe('RestaurantStore', () => {
       store.importJson(JSON.stringify([makeRestaurant({ id: '2', name: 'B店' })]));
 
       expect(store.restaurants().map((r) => r.id)).toEqual(['2']);
-      expect(store.allRestaurants().map((r) => r.id).sort()).toEqual(['1', '2']);
+      expect(
+        store
+          .allRestaurants()
+          .map((r) => r.id)
+          .sort(),
+      ).toEqual(['1', '2']);
     });
 
     it('復元したデータはクラウド側より新しい更新時刻を持つ', () => {

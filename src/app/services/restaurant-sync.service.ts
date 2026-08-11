@@ -44,7 +44,7 @@ export class RestaurantSyncService {
         this.lastSynced = null;
       }
       if (user) {
-        this.syncFromCloud(user.uid).catch(err => this.reportError('クラウド同期に失敗', err));
+        this.syncFromCloud(user.uid).catch((err) => this.reportError('クラウド同期に失敗', err));
       }
     });
 
@@ -68,7 +68,7 @@ export class RestaurantSyncService {
         this.markSynced(list);
         this.syncError.set(null);
       })
-      .catch(err => this.reportError('自動同期(push)に失敗', err));
+      .catch((err) => this.reportError('自動同期(push)に失敗', err));
   }
 
   private reportError(context: string, err: unknown): void {
@@ -101,7 +101,7 @@ export class RestaurantSyncService {
   private changedSince(list: Restaurant[]): Restaurant[] {
     const previous = this.lastSynced;
     if (!previous) return list; // 初回（まだ同期スナップショットが無い）は全件を変更扱いにする
-    return list.filter(r => JSON.stringify(previous.get(r.id)) !== JSON.stringify(r));
+    return list.filter((r) => JSON.stringify(previous.get(r.id)) !== JSON.stringify(r));
   }
 
   /**
@@ -136,7 +136,9 @@ export class RestaurantSyncService {
         deleted: Boolean(r.deleted),
         updatedAt: this.updatedAtOf(r),
       });
-      const sorted = Object.keys(data).sort().map(k => [k, data[k]]);
+      const sorted = Object.keys(data)
+        .sort()
+        .map((k) => [k, data[k]]);
       return JSON.stringify(sorted);
     };
     return normalize(a) === normalize(b);
@@ -144,14 +146,14 @@ export class RestaurantSyncService {
 
   /** 与えた内容を「クラウドと同期済み」として記録する。 */
   private markSynced(list: Restaurant[]): void {
-    this.lastSynced = new Map(list.map(r => [r.id, r]));
+    this.lastSynced = new Map(list.map((r) => [r.id, r]));
   }
 
   // 指定した店舗分だけをクラウドへ upsert する（fire-and-forget で呼ばれる想定）。
   private async pushChanged(uid: string, restaurants: Restaurant[]): Promise<void> {
     if (restaurants.length === 0) return;
     await Promise.all(
-      restaurants.map(r => setDoc(this.restaurantDoc(uid, r.id), this.toDocData(r)))
+      restaurants.map((r) => setDoc(this.restaurantDoc(uid, r.id), this.toDocData(r))),
     );
   }
 
@@ -167,8 +169,8 @@ export class RestaurantSyncService {
       const cloud = this.parseCloudDocs(snap.docs);
 
       const local = this.store.allRestaurants();
-      const localById = new Map(local.map(r => [r.id, r]));
-      const cloudById = new Map(cloud.map(r => [r.id, r]));
+      const localById = new Map(local.map((r) => [r.id, r]));
+      const cloudById = new Map(cloud.map((r) => [r.id, r]));
 
       // 1. union を取り、同一 id は updatedAt の新しい側を採用してマージ
       const allIds = new Set([...localById.keys(), ...cloudById.keys()]);
@@ -188,12 +190,12 @@ export class RestaurantSyncService {
       // 2. クラウドと内容が食い違うローカル分（未登録・deleted 状態・その他フィールド）を push。
       // 内容差分も push しないと、同期中に編集した分やローカル優先マージの結果が
       // クラウドへ反映されないまま「同期済み」として記録されてしまう。
-      const toPush = merged.filter(r => {
+      const toPush = merged.filter((r) => {
         const c = cloudById.get(r.id);
         return !c || !this.sameContent(c, r);
       });
       await Promise.all(
-        toPush.map(r => setDoc(this.restaurantDoc(uid, r.id), this.toDocData(r)))
+        toPush.map((r) => setDoc(this.restaurantDoc(uid, r.id), this.toDocData(r))),
       );
 
       // このメソッド終了後、自動 push effect が発火した際に merged 全件を「変更あり」と
@@ -215,9 +217,7 @@ export class RestaurantSyncService {
    * id を持たない不正なドキュメントは、`doc(..., undefined)` で例外になるため除外する。
    * ドキュメント ID を正としてフィールド側の id と食い違う場合も揃える。
    */
-  private parseCloudDocs(
-    docs: Array<{ id?: string; data: () => unknown }>,
-  ): Restaurant[] {
+  private parseCloudDocs(docs: { id?: string; data: () => unknown }[]): Restaurant[] {
     const result: Restaurant[] = [];
     for (const d of docs) {
       const data = d.data() as Partial<Restaurant> | undefined;

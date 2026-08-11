@@ -55,7 +55,9 @@ export class RestaurantStore {
 
   /** 「今日のおすすめ」「ランダム」で選ばれた店を直近履歴の先頭に記録する。 */
   recordPicked(id: string): void {
-    this.recentPickedIds.update((ids) => [id, ...ids.filter((x) => x !== id)].slice(0, RECENT_PICKS_LIMIT));
+    this.recentPickedIds.update((ids) =>
+      [id, ...ids.filter((x) => x !== id)].slice(0, RECENT_PICKS_LIMIT),
+    );
   }
 
   /**
@@ -86,10 +88,7 @@ export class RestaurantStore {
     }
 
     if (added.length === 0 && revived.size === 0) return 0;
-    this._restaurants.set([
-      ...this._restaurants().map((r) => revived.get(r.id) ?? r),
-      ...added,
-    ]);
+    this._restaurants.set([...this._restaurants().map((r) => revived.get(r.id) ?? r), ...added]);
     return added.length + revived.size;
   }
 
@@ -138,9 +137,7 @@ export class RestaurantStore {
     // 取り込み対象に含まれない削除済みレコード（tombstone）は残す。
     // 消すと他端末で削除した店が復活してしまうため。
     const importedIds = new Set(normalized.map((r) => r.id));
-    const keptTombstones = this._restaurants().filter(
-      (r) => r.deleted && !importedIds.has(r.id),
-    );
+    const keptTombstones = this._restaurants().filter((r) => r.deleted && !importedIds.has(r.id));
     this._restaurants.set([...normalized, ...keptTombstones]);
     return normalized.length;
   }

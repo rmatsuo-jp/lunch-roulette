@@ -5,8 +5,7 @@ export const routes: Routes = [
   {
     path: '',
     title: 'ランチくじ',
-    loadComponent: () =>
-      import('@features/recommend/recommend').then((m) => m.Recommend),
+    loadComponent: () => import('@features/recommend/recommend').then((m) => m.Recommend),
   },
   {
     path: 'data',

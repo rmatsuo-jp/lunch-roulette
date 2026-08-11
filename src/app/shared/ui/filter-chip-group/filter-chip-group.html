@@ -5,7 +5,7 @@
   }
   <mat-chip-set>
     @for (opt of options(); track opt) {
-      <mat-chip class="chip" [highlighted]="isSelected(opt)" (click)="toggle.emit(opt)">
+      <mat-chip class="chip" [highlighted]="isSelected(opt)" (click)="toggled.emit(opt)">
         {{ opt }}
       </mat-chip>
     }

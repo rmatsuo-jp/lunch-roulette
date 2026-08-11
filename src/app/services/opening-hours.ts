@@ -23,9 +23,7 @@ function toWeekMinutes(day: number, hour: number, minute: number): number {
 function isAlwaysOpen(p: OpeningPeriod): boolean {
   if (p.alwaysOpen) return true;
   if (p.closeDay == null || p.closeHour == null || p.closeMinute == null) return true;
-  return (
-    p.closeDay === p.openDay && p.closeHour === p.openHour && p.closeMinute === p.openMinute
-  );
+  return p.closeDay === p.openDay && p.closeHour === p.openHour && p.closeMinute === p.openMinute;
 }
 
 /**

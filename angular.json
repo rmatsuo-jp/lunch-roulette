@@ -46,9 +46,7 @@
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "allowedCommonJsDependencies": [
-              "papaparse"
-            ],
+            "allowedCommonJsDependencies": ["papaparse"],
             "assets": [
               {
                 "glob": "**/*",
@@ -60,9 +58,7 @@
                 "output": "/"
               }
             ],
-            "styles": [
-              "src/styles.scss"
-            ]
+            "styles": ["src/styles.scss"]
           },
           "configurations": {
             "production": {
@@ -127,7 +123,19 @@
           "options": {
             "buildTarget": "lunch-roulette:build:development",
             "tsConfig": "tsconfig.spec.json",
-            "runner": "vitest"
+            "runner": "vitest",
+            "coverageThresholds": {
+              "statements": 85,
+              "branches": 78,
+              "functions": 82,
+              "lines": 85
+            }
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
           }
         }
       }

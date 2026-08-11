@@ -21,8 +21,12 @@ export class FilterChipGroup {
   readonly selected = input.required<readonly string[]>();
   /** 選択肢が0件の場合に表示する案内文。 */
   readonly emptyMessage = input('');
-  /** チップクリック時に選択/解除したい値を通知する。 */
-  readonly toggle = output<string>();
+  /**
+   * チップクリック時に選択/解除したい値を通知する。
+   * 名前を `toggled` にしているのは、`toggle` が標準DOMイベント名と衝突するため
+   * （`@angular-eslint/no-output-native`）。
+   */
+  readonly toggled = output<string>();
 
   isSelected(value: string): boolean {
     return this.selected().includes(value);

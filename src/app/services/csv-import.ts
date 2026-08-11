@@ -121,9 +121,7 @@ export class CsvImport {
     const idx = lines.findIndex((line) => {
       // 素朴なカンマ分割だと `"店名, 住所"` のようなクォート内カンマを誤って分割するため、
       // 1行だけ papaparse に通して正しくセルへ分解する。
-      const cells = (Papa.parse<string[]>(line).data[0] ?? []).map((c) =>
-        c.trim().toLowerCase(),
-      );
+      const cells = (Papa.parse<string[]>(line).data[0] ?? []).map((c) => c.trim().toLowerCase());
       return cells.some((c) => headerKeys.includes(c));
     });
     // 見つからなければ元テキストをそのまま返す（従来動作を維持）。

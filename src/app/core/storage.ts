@@ -17,7 +17,7 @@ export interface ReadResult<T> {
 
 /** キーからJSONを読み込み、成否と生データを含む結果を返す。 */
 export function readJsonResult<T>(key: string, fallback: T): ReadResult<T> {
-  let raw: string | null = null;
+  let raw: string | null;
   try {
     raw = localStorage.getItem(key);
   } catch {

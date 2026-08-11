@@ -4,7 +4,14 @@
  * `GeolocationService` に委譲し、このコンポーネント自体は抽選・地図読み込み・選択結果の
  * オーケストレーションのみを担う。
  */
-import { ChangeDetectionStrategy, Component, WritableSignal, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  WritableSignal,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatCardModule } from '@angular/material/card';
@@ -170,7 +177,13 @@ export class Recommend {
     let bestScore = -Infinity;
     let tied: Restaurant[] = [];
     for (const r of list) {
-      const score = this.scorer.scoreOf(r, pos, recent, globalMeanRating, this.sortService.distanceOf(r));
+      const score = this.scorer.scoreOf(
+        r,
+        pos,
+        recent,
+        globalMeanRating,
+        this.sortService.distanceOf(r),
+      );
       if (score > bestScore) {
         bestScore = score;
         tied = [r];

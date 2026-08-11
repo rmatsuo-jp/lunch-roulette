@@ -54,15 +54,15 @@ npm run build    # 本番ビルド
 
 ```ts
 interface Restaurant {
-  id: string;          // 自動採番
-  name: string;        // 店名 (CSV: Title)
-  note?: string;       // メモ (CSV: Note)
-  url?: string;        // Google Maps リンク (CSV: URL)
-  area: string;        // エリア (CSV ファイル名)
-  genres: string[];    // ジャンルタグ（手動 or Places API取得結果の自動反映）
-  moods: string[];     // 気分・その他タグ（手動）
+  id: string; // 自動採番
+  name: string; // 店名 (CSV: Title)
+  note?: string; // メモ (CSV: Note)
+  url?: string; // Google Maps リンク (CSV: URL)
+  area: string; // エリア (CSV ファイル名)
+  genres: string[]; // ジャンルタグ（手動 or Places API取得結果の自動反映）
+  moods: string[]; // 気分・その他タグ（手動）
   places?: PlacesInfo; // Places APIで取得した店舗情報のキャッシュ
-  deleted?: boolean;   // 論理削除フラグ（クラウド同期の削除伝播用）
+  deleted?: boolean; // 論理削除フラグ（クラウド同期の削除伝播用）
 }
 ```
 
