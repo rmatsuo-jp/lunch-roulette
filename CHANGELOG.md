@@ -1,3 +1,10 @@
+# [0.7.0](https://github.com/rmatsuo-jp/lunch-roulette/compare/v0.6.1...v0.7.0) (2026-08-11)
+
+
+### Features
+
+* リリースノート表示を追加しバージョン生成をリリース時のみに戻す ([af66ac6](https://github.com/rmatsuo-jp/lunch-roulette/commit/af66ac652fd37ae6c9e086edb327406f5d8685a0))
+
 ## [0.6.1](https://github.com/rmatsuo-jp/lunch-roulette/compare/v0.6.0...v0.6.1) (2026-08-11)
 
 
