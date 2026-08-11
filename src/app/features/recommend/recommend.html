@@ -98,6 +98,12 @@
     </section>
   } @else if (mapsReady() && filtered().length > 0) {
     <p class="muted">地図表示できる店舗がありません（Places情報未取得）。取り込み画面から取得してください。</p>
+  } @else if (mapsError(); as mapsErr) {
+    <p class="muted">
+      <mat-icon inline>error_outline</mat-icon>
+      地図を表示できません: {{ mapsErr }}
+      （<a routerLink="/settings">設定画面</a>で API キーを確認してください）
+    </p>
   }
 
   @if (picked(); as p) {

@@ -54,14 +54,23 @@ export class Recommend {
   /** Google Maps スクリプトの読み込みが完了したか（未完了時は地図を描画しない）。 */
   readonly mapsReady = signal(false);
 
+  /** 地図の読み込みに失敗した理由（未失敗なら null）。無言で地図が消えるのを防ぐ。 */
+  readonly mapsError = signal<string | null>(null);
+
   /** 一覧マップの初期中心（東京駅付近）。マーカーがあれば fitBounds() で上書きされる。 */
   readonly defaultCenter: google.maps.LatLngLiteral = { lat: 35.681236, lng: 139.767125 };
 
   constructor() {
     this.mapsLoader
       .load()
-      .then(() => this.mapsReady.set(true))
-      .catch(() => this.mapsReady.set(false));
+      .then(() => {
+        this.mapsReady.set(true);
+        this.mapsError.set(null);
+      })
+      .catch((err: unknown) => {
+        this.mapsReady.set(false);
+        this.mapsError.set(err instanceof Error ? err.message : '地図を読み込めませんでした');
+      });
   }
 
   readonly areas = this.store.areas;

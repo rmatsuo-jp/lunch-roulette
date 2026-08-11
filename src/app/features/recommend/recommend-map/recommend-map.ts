@@ -32,7 +32,8 @@ export class RecommendMap {
     effect(() => {
       const map = this.map();
       const list = this.markers();
-      if (!map || list.length === 0) return;
+      // API 未初期化のまま実行されると例外でビュー全体の描画が止まるため二重に防御する。
+      if (!map || list.length === 0 || !window.google?.maps?.LatLngBounds) return;
       const bounds = new google.maps.LatLngBounds();
       for (const m of list) bounds.extend(m.position);
       map.fitBounds(bounds);
